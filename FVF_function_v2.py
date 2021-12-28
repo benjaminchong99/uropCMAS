@@ -73,24 +73,13 @@ def plot_pdfgraph(x_range_int, y_range, y, line_label, x_label, y_label, line_ty
     plt.show()
 
 
-def check_repeated_values(current, previous, record_count):
-    if current == previous:
-        record_count += 1
-        if record_count > 10:
-            pass  # do sth
-        else:
-            pass
-    else:
-        record_count = 0
-
-
 # Variable parameters
 Wcomp = 0.8   # the length of the RVE
 Hcomp = 0.8   # the width of the RVE
 Rmax = 0.016  # the maxmum radius of the fibres
 Rmin = 0.016  # the minmum radius of the fibres
 Tol = 0.0005  # the minmum distance of two circles (except for the radius)
-Vf = 0.60      # the FVF in the RVE
+Vf = 0.55     # the FVF in the RVE
 # cap at 0.55
 #
 # Algorithm of generating random distributing fibres
@@ -122,11 +111,91 @@ print("Ratio 4: ", ratio_PartIV)
 #listofrandom = randlist.tolist()
 # for i in listofrandom
 
+firstRatio = ratio_PartI
+secondRatio = ratio_PartI + ratio_PartII
+thirdRatio = ratio_PartI + ratio_PartII + ratio_PartIII
+fourthRatio = ratio_PartI + ratio_PartII + ratio_PartIII + ratio_PartIV
+
+
+def threshold_recount(CentList, Vff, record, section, count):
+    if len(record) > count:
+        if section == 1:
+            CentList = CentList + [Newcircle]
+            Vff = Vff + pi * Newcircle[2] ** 2.0 / (Wcomp * Hcomp)
+            record = [Vff]
+        elif section == 2:
+            CentList = CentList + [Newcircle_1]
+            Vff = Vff + pi * Newcircle_1[2] ** 2.0 / (Wcomp * Hcomp)
+            CentList = CentList + [Newcircle_2]
+            # this Vff will overwrite the previous one, add recursion?
+            Vff = Vff + pi * Newcircle_2[2] ** 2.0 / (Wcomp * Hcomp)
+            record = [Vff]
+        elif section == 3:
+            CentList = CentList + [Newcircle_3]
+            Vff = Vff + pi * Newcircle_3[2] ** 2.0 / (Wcomp * Hcomp)
+            CentList = CentList + [Newcircle_4]
+            # this Vff will overwrite the previous one, add recursion?
+            Vff = Vff + pi * Newcircle_4[2] ** 2.0 / (Wcomp * Hcomp)
+            record = [Vff]
+        elif section == 4:
+            CentList = CentList + [Newcircle_5]
+            Vff = Vff + pi * Newcircle_5[2] ** 2.0 / (Wcomp * Hcomp)
+            CentList = CentList + [Newcircle_6]
+            # this Vff will overwrite the previous one, add recursion?
+            Vff = Vff + pi * Newcircle_6[2] ** 2.0 / (Wcomp * Hcomp)
+            CentList = CentList + [Newcircle_7]
+            # this Vff will overwrite the previous one, add recursion?
+            Vff = Vff + pi * Newcircle_7[2] ** 2.0 / (Wcomp * Hcomp)
+            CentList = CentList + [Newcircle_8]
+            # this Vff will overwrite the previous one, add recursion?
+            Vff = Vff + pi * Newcircle_8[2] ** 2.0 / (Wcomp * Hcomp)
+            record = [Vff]
+    else:
+        pass
+    return record, Vff
+
+
+# def generatesectionI():
+#     pass
+
+
+# def generatesectionII():
+#     pass
+
+
+# def generatesectionIII():
+#     pass
+
+
+# def generatesectionIV():
+#     pass
+
+
+# def generating_circles(Vff):
+#     pass
+
+
+# class Queue:
+#     def __init__(self):
+#         self._items = []
+
+#     def enqueue(self, item):
+#         self._items.insert(0, item)
+
+#     def dequeue(self):
+#         self._items.pop()
+
+#     def is_empty(self):
+#         return self._items == []
 
 # !!! WARNIING BIG WHILE LOOP HERE !!!
 count = 0
 record_count = 0
 record = [0]
+# Vffqueue = Queue()
+# Vffqueue.enqueue(Vff)
+# current_Vff = Queue.dequeue()
+
 while Vff < Vf:
     count = count + 1
     prob = random()
@@ -150,10 +219,12 @@ while Vff < Vf:
             record = [Vff]
         else:
             record += [Vff]
-            if len(record) > 2000:
-                CentList = CentList + [Newcircle]
-                Vff = Vff + pi * Newcircle[2] ** 2.0 / (Wcomp * Hcomp)
-                record = [Vff]
+            record, Vff = threshold_recount(CentList, Vff, record, 1, 2000)
+            # if len(record) > 2000:
+            #    CentList = CentList + [Newcircle]
+            #    Vff = Vff + pi * Newcircle[2] ** 2.0 / (Wcomp * Hcomp)
+            #    record = [Vff]
+#        current_Vff.enqueue(Vff)
 
     # for Part II,  -Rmax <= X <= Rmax, Rmax <= Y <= Hcomp - Rmax:
     elif ratio_PartI <= prob < (ratio_PartI + ratio_PartII):
@@ -169,6 +240,7 @@ while Vff < Vf:
             CentList = CentList + [Newcircle_1]
             Vff = Vff + pi * Newcircle_1[2] ** 2.0 / (Wcomp * Hcomp)
             CentList = CentList + [Newcircle_2]
+            # this Vff will overwrite the previous one, add recursion?
             Vff = Vff + pi * Newcircle_2[2] ** 2.0 / (Wcomp * Hcomp)
 
         record.append(Vff)
@@ -177,11 +249,14 @@ while Vff < Vf:
             record = [Vff]
         else:
             record += [Vff]
-            if len(record) > 2000:
-                CentList = CentList + [Newcircle_1]
-                Vff = Vff + pi * Newcircle_1[2] ** 2.0 / (Wcomp * Hcomp)
-                CentList = CentList + [Newcircle_2]
-                Vff = Vff + pi * Newcircle_2[2] ** 2.0 / (Wcomp * Hcomp)
+            record, Vff = threshold_recount(CentList, Vff, record, 2, 2000)
+            # if len(record) > 2000:
+            #     CentList = CentList + [Newcircle_1]
+            #     Vff = Vff + pi * Newcircle_1[2] ** 2.0 / (Wcomp * Hcomp)
+            #     CentList = CentList + [Newcircle_2]
+            #     # this Vff will overwrite the previous one, add recursion?
+            #     Vff = Vff + pi * Newcircle_2[2] ** 2.0 / (Wcomp * Hcomp)
+            #     record = [Vff]
 
     # for Part III, Rmax <= X <= Wcomp -Rmax, -Rmax <= Y <= Rmax:
     elif (ratio_PartI + ratio_PartII) <= prob < (ratio_PartI + ratio_PartII + ratio_PartIII):
@@ -197,6 +272,7 @@ while Vff < Vf:
             CentList = CentList + [Newcircle_3]
             Vff = Vff + pi * Newcircle_3[2] ** 2.0 / (Wcomp * Hcomp)
             CentList = CentList + [Newcircle_4]
+            # this Vff will overwrite the previous one, add recursion?
             Vff = Vff + pi * Newcircle_4[2] ** 2.0 / (Wcomp * Hcomp)
 
         record.append(Vff)
@@ -205,11 +281,14 @@ while Vff < Vf:
             record = [Vff]
         else:
             record += [Vff]
-            if len(record) > 2000:
-                CentList = CentList + [Newcircle_3]
-                Vff = Vff + pi * Newcircle_3[2] ** 2.0 / (Wcomp * Hcomp)
-                CentList = CentList + [Newcircle_4]
-                Vff = Vff + pi * Newcircle_4[2] ** 2.0 / (Wcomp * Hcomp)
+            record, Vff = threshold_recount(CentList, Vff, record, 3, 2000)
+            # if len(record) > 2000:
+            #     CentList = CentList + [Newcircle_3]
+            #     Vff = Vff + pi * Newcircle_3[2] ** 2.0 / (Wcomp * Hcomp)
+            #     CentList = CentList + [Newcircle_4]
+            #     # this Vff will overwrite the previous one, add recursion?
+            #     Vff = Vff + pi * Newcircle_4[2] ** 2.0 / (Wcomp * Hcomp)
+            #     record = [Vff]
     # for Part IV, Rmax <= X <= -Rmax, -Rmax <= Y <= Rmax:
     else:
         X = ran(0 - 1 * Rmax, 0 + 1 * Rmax)
@@ -227,12 +306,16 @@ while Vff < Vf:
 
         if Check_5 == 'No' and Check_6 == 'No' and Check_7 == 'No' and Check_8 == 'No':
             CentList = CentList + [Newcircle_5]
+            # this Vff will overwrite the previous one, add recursion?
             Vff = Vff + pi * Newcircle_5[2] ** 2.0 / (Wcomp * Hcomp)
             CentList = CentList + [Newcircle_6]
+            # this Vff will overwrite the previous one, add recursion?
             Vff = Vff + pi * Newcircle_6[2] ** 2.0 / (Wcomp * Hcomp)
             CentList = CentList + [Newcircle_7]
+            # this Vff will overwrite the previous one, add recursion?
             Vff = Vff + pi * Newcircle_7[2] ** 2.0 / (Wcomp * Hcomp)
             CentList = CentList + [Newcircle_8]
+            # this Vff will overwrite the previous one, add recursion?
             Vff = Vff + pi * Newcircle_8[2] ** 2.0 / (Wcomp * Hcomp)
 
             record.append(Vff)
@@ -241,15 +324,20 @@ while Vff < Vf:
                 record = [Vff]
             else:
                 record += [Vff]
-                if len(record) > 2000:
-                    CentList = CentList + [Newcircle_5]
-                    Vff = Vff + pi * Newcircle_5[2] ** 2.0 / (Wcomp * Hcomp)
-                    CentList = CentList + [Newcircle_6]
-                    Vff = Vff + pi * Newcircle_6[2] ** 2.0 / (Wcomp * Hcomp)
-                    CentList = CentList + [Newcircle_7]
-                    Vff = Vff + pi * Newcircle_7[2] ** 2.0 / (Wcomp * Hcomp)
-                    CentList = CentList + [Newcircle_8]
-                    Vff = Vff + pi * Newcircle_8[2] ** 2.0 / (Wcomp * Hcomp)
+                record, Vff = threshold_recount(CentList, Vff, record, 4, 2000)
+                # if len(record) > 2000:
+                #     CentList = CentList + [Newcircle_5]
+                #     Vff = Vff + pi * Newcircle_5[2] ** 2.0 / (Wcomp * Hcomp)
+                #     CentList = CentList + [Newcircle_6]
+                #     # this Vff will overwrite the previous one, add recursion?
+                #     Vff = Vff + pi * Newcircle_6[2] ** 2.0 / (Wcomp * Hcomp)
+                #     CentList = CentList + [Newcircle_7]
+                #     # this Vff will overwrite the previous one, add recursion?
+                #     Vff = Vff + pi * Newcircle_7[2] ** 2.0 / (Wcomp * Hcomp)
+                #     CentList = CentList + [Newcircle_8]
+                #     # this Vff will overwrite the previous one, add recursion?
+                #     Vff = Vff + pi * Newcircle_8[2] ** 2.0 / (Wcomp * Hcomp)
+                #     record = [Vff]
 
     print(Vff)   # FVF for each step
 # print(CentList)  # The coordinate values of each fibre
