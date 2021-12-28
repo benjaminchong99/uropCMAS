@@ -72,7 +72,7 @@ def plot_pdfgraph(x_range_int, y_range, y, line_label, x_label, y_label, line_ty
     plt.legend(loc='upper right')
     plt.show()
 
-def threshold_recount(CentList, Vff, record, section, count):
+def recount_limit(CentList, Vff, record, section, count):
     if len(record) > count:
         if section == 1:
             CentList = CentList + [Newcircle]
@@ -134,7 +134,7 @@ Hcomp = 0.8   # the width of the RVE
 Rmax = 0.016  # the maxmum radius of the fibres
 Rmin = 0.016  # the minmum radius of the fibres
 Tol = 0.001  # the minmum distance of two circles (except for the radius)
-Vf = 0.55    # the FVF in the RVE
+Vf = 0.65    # the FVF in the RVE
 # cap at 0.55
 #
 # Algorithm of generating random distributing fibres
@@ -207,7 +207,7 @@ while current_Vff < Vf:
             record = [Vff]
         else:
             record += [Vff]
-            record, Vff = threshold_recount(CentList, Vff, record, 1, 2000)
+            record, Vff = recount_limit(CentList, Vff, record, 1, 200)
             # if len(record) > 2000:
             #    CentList = CentList + [Newcircle]
             #    Vff = Vff + pi * Newcircle[2] ** 2.0 / (Wcomp * Hcomp)
@@ -239,7 +239,7 @@ while current_Vff < Vf:
             record = [Vff]
         else:
             record += [Vff]
-            record, Vff = threshold_recount(CentList, Vff, record, 2, 2000)
+            record, Vff = recount_limit(CentList, Vff, record, 2, 200)
             # if len(record) > 2000:
             #     CentList = CentList + [Newcircle_1]
             #     Vff = Vff + pi * Newcircle_1[2] ** 2.0 / (Wcomp * Hcomp)
@@ -274,7 +274,7 @@ while current_Vff < Vf:
             record = [Vff]
         else:
             record += [Vff]
-            record, Vff = threshold_recount(CentList, Vff, record, 3, 2000)
+            record, Vff = recount_limit(CentList, Vff, record, 3, 200)
             # if len(record) > 2000:
             #     CentList = CentList + [Newcircle_3]
             #     Vff = Vff + pi * Newcircle_3[2] ** 2.0 / (Wcomp * Hcomp)
@@ -322,7 +322,7 @@ while current_Vff < Vf:
                 record = [Vff]
             else:
                 record += [Vff]
-                record, Vff = threshold_recount(CentList, Vff, record, 4, 2000)
+                record, Vff = recount_limit(CentList, Vff, record, 4, 200)
                 # if len(record) > 2000:
                 #     CentList = CentList + [Newcircle_5]
                 #     Vff = Vff + pi * Newcircle_5[2] ** 2.0 / (Wcomp * Hcomp)
