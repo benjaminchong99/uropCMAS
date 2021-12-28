@@ -79,7 +79,7 @@ Hcomp = 0.8   # the width of the RVE
 Rmax = 0.016  # the maxmum radius of the fibres
 Rmin = 0.016  # the minmum radius of the fibres
 Tol = 0.0005  # the minmum distance of two circles (except for the radius)
-Vf = 0.60      # the FVF in the RVE
+Vf = 0.55      # the FVF in the RVE
 # cap at 0.55
 #
 # Algorithm of generating random distributing fibres
@@ -107,9 +107,9 @@ print("Ratio 4: ", ratio_PartIV)
 # ^ up till here still fast
 #count = 0
 #randlist = np.random.random(size=10000)
-#print(randlist)
+# print(randlist)
 #listofrandom = randlist.tolist()
-#for i in listofrandom
+# for i in listofrandom
 
 
 # !!! WARNIING BIG WHILE LOOP HERE !!!
@@ -117,7 +117,7 @@ print("Ratio 4: ", ratio_PartIV)
 while Vff < Vf:
     count = count + 1
     prob = random()
-    #print(prob)  # prob for each step when Vff < Vf
+    # print(prob)  # prob for each step when Vff < Vf
 
     # for Part I, Rmax < X < Wcomp - Rmax, Rmax < Y < Hcomp - Rmax:
     if prob < ratio_PartI:

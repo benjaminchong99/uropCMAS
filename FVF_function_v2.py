@@ -72,51 +72,6 @@ def plot_pdfgraph(x_range_int, y_range, y, line_label, x_label, y_label, line_ty
     plt.legend(loc='upper right')
     plt.show()
 
-
-# Variable parameters
-Wcomp = 0.8   # the length of the RVE
-Hcomp = 0.8   # the width of the RVE
-Rmax = 0.016  # the maxmum radius of the fibres
-Rmin = 0.016  # the minmum radius of the fibres
-Tol = 0.0005  # the minmum distance of two circles (except for the radius)
-Vf = 0.55     # the FVF in the RVE
-# cap at 0.55
-#
-# Algorithm of generating random distributing fibres
-# Ratio of each part to the whole RVE area
-ratio_PartI = (Wcomp - 2 * Rmax) * (Hcomp - 2 * Rmax) / \
-    (Wcomp + 2 * Rmax) * (Hcomp + 2 * Rmax)
-ratio_PartII = (2 * 2 * Rmax * (Hcomp - 2 * Rmax)) / \
-    (Wcomp + 2 * Rmax) * (Hcomp + 2 * Rmax)
-ratio_PartIII = (2 * 2 * Rmax * (Wcomp - 2 * Rmax)) / \
-    (Wcomp + 2 * Rmax) * (Hcomp + 2 * Rmax)
-ratio_PartIV = (4 * 2 * Rmax * 2 * Rmax) / \
-    (Wcomp + 2 * Rmax) * (Hcomp + 2 * Rmax)
-#
-#
-CentList = [[ran(0, Wcomp), ran(0, Hcomp), ran(Rmin, Rmax)]]
-Vff = pi * CentList[0][2] ** 2.0 / (Wcomp * Hcomp)
-# an indication for the user to know whether the codes is correct or not
-print("begin")
-print("Vff: ", Vff, "\n Vf: ", Vf)
-print("Ratio 1: ", ratio_PartI)
-print("Ratio 2: ", ratio_PartII)
-print("Ratio 3: ", ratio_PartIII)
-print("Ratio 4: ", ratio_PartIV)
-
-# ^ up till here still fast
-#count = 0
-#randlist = np.random.random(size=20000)
-# print(randlist)
-#listofrandom = randlist.tolist()
-# for i in listofrandom
-
-firstRatio = ratio_PartI
-secondRatio = ratio_PartI + ratio_PartII
-thirdRatio = ratio_PartI + ratio_PartII + ratio_PartIII
-fourthRatio = ratio_PartI + ratio_PartII + ratio_PartIII + ratio_PartIV
-
-
 def threshold_recount(CentList, Vff, record, section, count):
     if len(record) > count:
         if section == 1:
@@ -154,49 +109,82 @@ def threshold_recount(CentList, Vff, record, section, count):
         pass
     return record, Vff
 
+class Queue:
+    def __init__(self):
+        self._items = []
 
-# def generatesectionI():
-#     pass
+    def enqueue(self, item):
+        self._items.insert(0, item)
 
+    def dequeue(self):
+        return self._items.pop()
 
-# def generatesectionII():
-#     pass
+    def is_empty(self):
+        return self._items == []
 
-
-# def generatesectionIII():
-#     pass
-
-
-# def generatesectionIV():
-#     pass
-
-
-# def generating_circles(Vff):
-#     pass
+    def peek(self):
+        return self._items[-1]
 
 
-# class Queue:
-#     def __init__(self):
-#         self._items = []
 
-#     def enqueue(self, item):
-#         self._items.insert(0, item)
+"""START OF COMPUTATION"""
+# Variable parameters
+Wcomp = 0.8   # the length of the RVE
+Hcomp = 0.8   # the width of the RVE
+Rmax = 0.016  # the maxmum radius of the fibres
+Rmin = 0.016  # the minmum radius of the fibres
+Tol = 0.001  # the minmum distance of two circles (except for the radius)
+Vf = 0.55    # the FVF in the RVE
+# cap at 0.55
+#
+# Algorithm of generating random distributing fibres
+# Ratio of each part to the whole RVE area
+ratio_PartI = (Wcomp - 2 * Rmax) * (Hcomp - 2 * Rmax) / \
+    (Wcomp + 2 * Rmax) * (Hcomp + 2 * Rmax)
+ratio_PartII = (2 * 2 * Rmax * (Hcomp - 2 * Rmax)) / \
+    (Wcomp + 2 * Rmax) * (Hcomp + 2 * Rmax)
+ratio_PartIII = (2 * 2 * Rmax * (Wcomp - 2 * Rmax)) / \
+    (Wcomp + 2 * Rmax) * (Hcomp + 2 * Rmax)
+ratio_PartIV = (4 * 2 * Rmax * 2 * Rmax) / \
+    (Wcomp + 2 * Rmax) * (Hcomp + 2 * Rmax)
+#
+#
+CentList = [[ran(0, Wcomp), ran(0, Hcomp), ran(Rmin, Rmax)]]
+Vff = pi * CentList[0][2] ** 2.0 / (Wcomp * Hcomp)
+# an indication for the user to know whether the codes is correct or not
+print("begin")
+print("Vff: ", Vff, "\n Vf: ", Vf)
+print("Ratio 1: ", ratio_PartI)
+print("Ratio 2: ", ratio_PartII)
+print("Ratio 3: ", ratio_PartIII)
+print("Ratio 4: ", ratio_PartIV)
 
-#     def dequeue(self):
-#         self._items.pop()
+# ^ up till here still fast
+#count = 0
+#randlist = np.random.random(size=20000)
+# print(randlist)
+#listofrandom = randlist.tolist()
+# for i in listofrandom
 
-#     def is_empty(self):
-#         return self._items == []
+
+firstRatio = ratio_PartI
+secondRatio = ratio_PartI + ratio_PartII
+thirdRatio = ratio_PartI + ratio_PartII + ratio_PartIII
+fourthRatio = ratio_PartI + ratio_PartII + ratio_PartIII + ratio_PartIV
+
 
 # !!! WARNIING BIG WHILE LOOP HERE !!!
 count = 0
 record_count = 0
 record = [0]
-# Vffqueue = Queue()
-# Vffqueue.enqueue(Vff)
-# current_Vff = Queue.dequeue()
 
-while Vff < Vf:
+# Initialize queue
+Vffqueue = Queue()
+Vffqueue.enqueue(Vff)
+current_Vff = Vffqueue.dequeue()
+print(current_Vff)
+
+while current_Vff < Vf:
     count = count + 1
     prob = random()
     # print(prob)  # prob for each step when Vff < Vf
@@ -224,7 +212,7 @@ while Vff < Vf:
             #    CentList = CentList + [Newcircle]
             #    Vff = Vff + pi * Newcircle[2] ** 2.0 / (Wcomp * Hcomp)
             #    record = [Vff]
-#        current_Vff.enqueue(Vff)
+        Vffqueue.enqueue(Vff)
 
     # for Part II,  -Rmax <= X <= Rmax, Rmax <= Y <= Hcomp - Rmax:
     elif ratio_PartI <= prob < (ratio_PartI + ratio_PartII):
@@ -240,8 +228,10 @@ while Vff < Vf:
             CentList = CentList + [Newcircle_1]
             Vff = Vff + pi * Newcircle_1[2] ** 2.0 / (Wcomp * Hcomp)
             CentList = CentList + [Newcircle_2]
+            Vffqueue.enqueue(Vff)
             # this Vff will overwrite the previous one, add recursion?
             Vff = Vff + pi * Newcircle_2[2] ** 2.0 / (Wcomp * Hcomp)
+            Vffqueue.enqueue(Vff)
 
         record.append(Vff)
 
@@ -257,6 +247,7 @@ while Vff < Vf:
             #     # this Vff will overwrite the previous one, add recursion?
             #     Vff = Vff + pi * Newcircle_2[2] ** 2.0 / (Wcomp * Hcomp)
             #     record = [Vff]
+        Vffqueue.enqueue(Vff)
 
     # for Part III, Rmax <= X <= Wcomp -Rmax, -Rmax <= Y <= Rmax:
     elif (ratio_PartI + ratio_PartII) <= prob < (ratio_PartI + ratio_PartII + ratio_PartIII):
@@ -272,8 +263,10 @@ while Vff < Vf:
             CentList = CentList + [Newcircle_3]
             Vff = Vff + pi * Newcircle_3[2] ** 2.0 / (Wcomp * Hcomp)
             CentList = CentList + [Newcircle_4]
+            Vffqueue.enqueue(Vff)
             # this Vff will overwrite the previous one, add recursion?
             Vff = Vff + pi * Newcircle_4[2] ** 2.0 / (Wcomp * Hcomp)
+            Vffqueue.enqueue(Vff)
 
         record.append(Vff)
 
@@ -289,6 +282,8 @@ while Vff < Vf:
             #     # this Vff will overwrite the previous one, add recursion?
             #     Vff = Vff + pi * Newcircle_4[2] ** 2.0 / (Wcomp * Hcomp)
             #     record = [Vff]
+        Vffqueue.enqueue(Vff)
+
     # for Part IV, Rmax <= X <= -Rmax, -Rmax <= Y <= Rmax:
     else:
         X = ran(0 - 1 * Rmax, 0 + 1 * Rmax)
@@ -309,12 +304,15 @@ while Vff < Vf:
             # this Vff will overwrite the previous one, add recursion?
             Vff = Vff + pi * Newcircle_5[2] ** 2.0 / (Wcomp * Hcomp)
             CentList = CentList + [Newcircle_6]
+            Vffqueue.enqueue(Vff)
             # this Vff will overwrite the previous one, add recursion?
             Vff = Vff + pi * Newcircle_6[2] ** 2.0 / (Wcomp * Hcomp)
             CentList = CentList + [Newcircle_7]
+            Vffqueue.enqueue(Vff)
             # this Vff will overwrite the previous one, add recursion?
             Vff = Vff + pi * Newcircle_7[2] ** 2.0 / (Wcomp * Hcomp)
             CentList = CentList + [Newcircle_8]
+            Vffqueue.enqueue(Vff)
             # this Vff will overwrite the previous one, add recursion?
             Vff = Vff + pi * Newcircle_8[2] ** 2.0 / (Wcomp * Hcomp)
 
@@ -338,7 +336,11 @@ while Vff < Vf:
                 #     # this Vff will overwrite the previous one, add recursion?
                 #     Vff = Vff + pi * Newcircle_8[2] ** 2.0 / (Wcomp * Hcomp)
                 #     record = [Vff]
+                Vffqueue.enqueue(Vff)
 
+        Vffqueue.enqueue(Vff)
+
+    current_Vff = Vffqueue.dequeue()
     print(Vff)   # FVF for each step
 # print(CentList)  # The coordinate values of each fibre
 print('FVF:', Vff, '\n')   # The final FVF

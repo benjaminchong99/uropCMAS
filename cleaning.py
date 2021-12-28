@@ -79,7 +79,7 @@ Hcomp = 0.8   # the width of the RVE
 Rmax = 0.016  # the maxmum radius of the fibres
 Rmin = 0.016  # the minmum radius of the fibres
 Tol = 0.0005  # the minmum distance of two circles (except for the radius)
-Vf = 0.55      # the FVF in the RVE
+Vf = 0.35      # the FVF in the RVE
 # cap at 0.55
 #
 # Algorithm of generating random distributing fibres
@@ -102,7 +102,8 @@ print("begin")
 # !!! WARNIING BIG WHILE LOOP HERE !!!
 while Vff < Vf:
     prob = random()
-    # print(prob)  # prob for each step when Vff < Vf
+
+    print(Vff)  # prob for each step when Vff < Vf
 
     # for Part I, Rmax < X < Wcomp - Rmax, Rmax < Y < Hcomp - Rmax:
     if prob < ratio_PartI:
@@ -130,6 +131,7 @@ while Vff < Vf:
             CentList = CentList + [Newcircle_1]
             Vff = Vff + pi * Newcircle_1[2] ** 2.0 / (Wcomp * Hcomp)
             CentList = CentList + [Newcircle_2]
+            # this Vff will overwrite the previous one, add recursion?
             Vff = Vff + pi * Newcircle_2[2] ** 2.0 / (Wcomp * Hcomp)
         continue
 
@@ -147,6 +149,7 @@ while Vff < Vf:
             CentList = CentList + [Newcircle_3]
             Vff = Vff + pi * Newcircle_3[2] ** 2.0 / (Wcomp * Hcomp)
             CentList = CentList + [Newcircle_4]
+            # this Vff will overwrite the previous one, add recursion?
             Vff = Vff + pi * Newcircle_4[2] ** 2.0 / (Wcomp * Hcomp)
         continue
 
@@ -178,7 +181,7 @@ while Vff < Vf:
     # print(Vff)   # FVF for each step
 # print(CentList)  # The coordinate values of each fibre
 print('FVF:', Vff, '\n')   # The final FVF
-
+print(CentList)
 
 # 0 - RVE image
 #
@@ -288,29 +291,37 @@ for i in range(10):
 print('Probability of 3rd nearest neighbor distance in each interval:\n', D3, '\n')
 #=============================================================================#
 # plot the 1st pdf
-plt.plot(np.arange(2, 3.5, 0.15), D1, '--ro', label='Real structure-1st')
-plt.xlabel('h/R')
-plt.ylabel('Probability Density Function')
-plt.ylim(0, 0.8)
-plt.legend(loc='upper right')
-plt.show()
-#
+plot_pdfgraph([2, 3.5, 0.15], [0, 0.8], D1, "Real structure-1st",
+              'h/R', 'Probability Density Function', line_type="--ro")
+
+# plt.plot(np.arange(2, 3.5, 0.15), D1, '--ro', label='Real structure-1st')
+# plt.xlabel('h/R')
+# plt.ylabel('Probability Density Function')
+# plt.ylim(0, 0.8)
+# plt.legend(loc='upper right')
+# plt.show()
+
 # plot the 2nd pdf
-plt.plot(np.arange(2, 4.5, 0.25), D2, '--ro', label='Real structure-2nd')
-plt.xlabel('h/R')
-plt.ylabel('Probability Density Function')
-plt.ylim(0, 0.8)
-plt.legend(loc='upper right')
-plt.show()
-#
+plot_pdfgraph([2, 4.5, 0.25], [0, 0.8], D2, "Real structure-2nd",
+              'h/R', 'Probability Density Function', line_type="--ro")
+
+# plt.plot(np.arange(2, 4.5, 0.25), D2, '--ro', label='Real structure-2nd')
+# plt.xlabel('h/R')
+# plt.ylabel('Probability Density Function')
+# plt.ylim(0, 0.8)
+# plt.legend(loc='upper right')
+# plt.show()
+
 # plot the 3rd pdf
-plt.plot(np.arange(2, 5, 0.3), D3, '--ro', label='Real structure-3rd')
-plt.xlabel('h/R')
-plt.ylabel('Probability Density Function')
-plt.ylim(0, 0.8)
-plt.legend(loc='upper right')
-plt.show()
-#
+plot_pdfgraph([2, 5, 0.3], [0, 0.8], D3, "Real structure-3rd",
+              'h/R', 'Probability Density Function', line_type="--ro")
+# plt.plot(np.arange(2, 5, 0.3), D3, '--ro', label='Real structure-3rd')
+# plt.xlabel('h/R')
+# plt.ylabel('Probability Density Function')
+# plt.ylim(0, 0.8)
+# plt.legend(loc='upper right')
+# plt.show()
+
 
 # 2 - Nearest Neighbors orientation
 A = CentList  # for simplity
@@ -412,10 +423,13 @@ y_deriv = np.polyval(dp, h)
 g_r = y_deriv / (2 * pi * h)
 print('4: g(r) values:\n', g_r)
 #=============================================================================#
-plt.plot(np.arange(0.0/R, 0.3/R, 0.01/R), g_r,
-         '--r.', label='Pair distribution function')
-plt.xlabel('h/R')
-plt.ylabel('g(r)')
-plt.ylim(0.0, 1.5)
-plt.legend(loc='upper right')
-plt.show()
+plot_pdfgraph([0.0/R, 0.3/R, 0.01/R], [0.0, 1.5], g_r,
+              "Pair distribution function", 'h/R', 'g(r)', line_type="--r")
+
+# plt.plot(np.arange(0.0/R, 0.3/R, 0.01/R), g_r,
+#          '--r.', label='Pair distribution function')
+# plt.xlabel('h/R')
+# plt.ylabel('g(r)')
+# plt.ylim(0.0, 1.5)
+# plt.legend(loc='upper right')
+# plt.show()
