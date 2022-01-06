@@ -6,7 +6,7 @@ from math import *
 from sklearn.neighbors import KDTree
 from scipy import spatial
 from astropy.stats import RipleysKEstimator
-from matplotlib import pyplot as plt
+from matplotlib import interactive, pyplot as plt
 
 '''
 Problems:
@@ -111,21 +111,29 @@ def recount_limit(CentList, Vff, record, section, count):
     return record, Vff
 
 
-class Queue:
-    def __init__(self):
-        self._items = []
+def modelprint(Wcomp, Hcomp, lw, Vff, CentList):
 
-    def enqueue(self, item):
-        self._items.insert(0, item)
+    print('FVF:', Vff, '\n')   # The final FVF
+    print(CentList)
+    print(count)
 
-    def dequeue(self):
-        return self._items.pop()
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    rectan = Rectangle((0, 0), Wcomp, Hcomp, linewidth=lw, edgecolor='red', facecolor='w',
+                       linestyle='solid', alpha=1.0)
+    ax.add_patch(rectan)
 
-    def is_empty(self):
-        return self._items == []
+    for Cir in CentList:
+        X = Cir[0]
+        Y = Cir[1]
+        R = Cir[2]
+        Cir = Circle(xy=(X, Y), radius=R, color='black', alpha=1.0)
+        ax.add_patch(Cir)
+        plt.axis('scaled')
+        # change limits of x or y axis so that equal increemets of x and y have the same length
+        plt.axis('equal')
+    plt.show()
 
-    def peek(self):
-        return self._items[-1]
 
 
 """START OF COMPUTATION"""
@@ -134,25 +142,20 @@ Rmax = 0.016  # the maxmum radius of the fibres
 Rmin = 0.016  # the minmum radius of the fibres
 Wcomp = Rmax*50  # 0.8   # the length of the RVE
 Hcomp = Rmax*50  # 0.8 # the width of the RVE
-Tol = 0.0005  # the minmum distance of two circles (except for the radius)
-Vf = 0.65    # the FVF in the RVE
-attempts = 200  # limit cap for iterations in algortihm to generate placement
+Tol = 0.0001  # the minmum distance of two circles (except for the radius)
+Vf = 0.55    # the FVF in the RVE
 # cap at 0.55
 #
 # Algorithm of generating random distributing fibres
 # Ratio of each part to the whole RVE area
 ratio_PartI = (Wcomp - 2 * Rmax) * (Hcomp - 2 * Rmax) / \
     (Wcomp + 2 * Rmax) * (Hcomp + 2 * Rmax)
-# ratio for centre
 ratio_PartII = (2 * 2 * Rmax * (Hcomp - 2 * Rmax)) / \
     (Wcomp + 2 * Rmax) * (Hcomp + 2 * Rmax)
-# ratio for vertical sides
 ratio_PartIII = (2 * 2 * Rmax * (Wcomp - 2 * Rmax)) / \
     (Wcomp + 2 * Rmax) * (Hcomp + 2 * Rmax)
-# ratio for horizontal sides
 ratio_PartIV = (4 * 2 * Rmax * 2 * Rmax) / \
     (Wcomp + 2 * Rmax) * (Hcomp + 2 * Rmax)
-# ratio for 4 corners
 #
 #
 CentList = [[ran(0, Wcomp), ran(0, Hcomp), ran(Rmin, Rmax)]]
@@ -178,22 +181,37 @@ secondRatio = ratio_PartI + ratio_PartII
 thirdRatio = ratio_PartI + ratio_PartII + ratio_PartIII
 fourthRatio = ratio_PartI + ratio_PartII + ratio_PartIII + ratio_PartIV
 
-
 # !!! WARNIING BIG WHILE LOOP HERE !!!
 count = 0
-record_count = 0
+hit = 0
 record = [0]
+previousVff = 0
+prob = random()
+print(Vff)
 
-# Initialize queue
-Vffqueue = Queue()
-Vffqueue.enqueue(Vff)
-current_Vff = Vffqueue.dequeue()
-print(current_Vff)
+direction = "up"
+diff = 0.1
 
-while current_Vff < Vf:
+while Vff < Vf:
     count = count + 1
-    prob = random()
-    # print(prob)  # prob for each step when Vff < Vf
+    if Vff == previousVff:
+        prob += diff
+
+        if prob > 1:
+            prob = prob - 1
+            hit = 1
+
+        elif prob > initial_prob and hit == 1:
+            diff /= 2
+            hit = 0
+
+    else:
+        prob = random()
+        initial_prob = prob
+        diff = 0.1
+
+    previousVff = Vff
+    # print("prob: ", prob)  # prob for each step when Vff < Vf
 
     # for Part I, Rmax < X < Wcomp - Rmax, Rmax < Y < Hcomp - Rmax:
     if prob < ratio_PartI:
@@ -206,19 +224,6 @@ while current_Vff < Vf:
             CentList = CentList + [Newcircle]
             Vff = Vff + pi * Newcircle[2] ** 2.0 / (Wcomp * Hcomp)
             # for chck the code sentence by sentence
-
-        record.append(Vff)
-
-        if record[-1] != record[0]:
-            record = [Vff]
-        else:
-            record += [Vff]
-            record, Vff = recount_limit(CentList, Vff, record, 1, attempts)
-            # if len(record) > 2000:
-            #    CentList = CentList + [Newcircle]
-            #    Vff = Vff + pi * Newcircle[2] ** 2.0 / (Wcomp * Hcomp)
-            #    record = [Vff]
-        Vffqueue.enqueue(Vff)
 
     # for Part II,  -Rmax <= X <= Rmax, Rmax <= Y <= Hcomp - Rmax:
     elif ratio_PartI <= prob < (ratio_PartI + ratio_PartII):
@@ -234,26 +239,8 @@ while current_Vff < Vf:
             CentList = CentList + [Newcircle_1]
             Vff = Vff + pi * Newcircle_1[2] ** 2.0 / (Wcomp * Hcomp)
             CentList = CentList + [Newcircle_2]
-            Vffqueue.enqueue(Vff)
-            # this Vff will overwrite the previous one, add recursion?
+
             Vff = Vff + pi * Newcircle_2[2] ** 2.0 / (Wcomp * Hcomp)
-            Vffqueue.enqueue(Vff)
-
-        record.append(Vff)
-
-        if record[-1] != record[0]:
-            record = [Vff]
-        else:
-            record += [Vff]
-            record, Vff = recount_limit(CentList, Vff, record, 2, attempts)
-            # if len(record) > 2000:
-            #     CentList = CentList + [Newcircle_1]
-            #     Vff = Vff + pi * Newcircle_1[2] ** 2.0 / (Wcomp * Hcomp)
-            #     CentList = CentList + [Newcircle_2]
-            #     # this Vff will overwrite the previous one, add recursion?
-            #     Vff = Vff + pi * Newcircle_2[2] ** 2.0 / (Wcomp * Hcomp)
-            #     record = [Vff]
-        Vffqueue.enqueue(Vff)
 
     # for Part III, Rmax <= X <= Wcomp -Rmax, -Rmax <= Y <= Rmax:
     elif (ratio_PartI + ratio_PartII) <= prob < (ratio_PartI + ratio_PartII + ratio_PartIII):
@@ -269,26 +256,8 @@ while current_Vff < Vf:
             CentList = CentList + [Newcircle_3]
             Vff = Vff + pi * Newcircle_3[2] ** 2.0 / (Wcomp * Hcomp)
             CentList = CentList + [Newcircle_4]
-            Vffqueue.enqueue(Vff)
-            # this Vff will overwrite the previous one, add recursion?
+
             Vff = Vff + pi * Newcircle_4[2] ** 2.0 / (Wcomp * Hcomp)
-            Vffqueue.enqueue(Vff)
-
-        record.append(Vff)
-
-        if record[-1] != record[0]:
-            record = [Vff]
-        else:
-            record += [Vff]
-            record, Vff = recount_limit(CentList, Vff, record, 3, attempts)
-            # if len(record) > 2000:
-            #     CentList = CentList + [Newcircle_3]
-            #     Vff = Vff + pi * Newcircle_3[2] ** 2.0 / (Wcomp * Hcomp)
-            #     CentList = CentList + [Newcircle_4]
-            #     # this Vff will overwrite the previous one, add recursion?
-            #     Vff = Vff + pi * Newcircle_4[2] ** 2.0 / (Wcomp * Hcomp)
-            #     record = [Vff]
-        Vffqueue.enqueue(Vff)
 
     # for Part IV, Rmax <= X <= -Rmax, -Rmax <= Y <= Rmax:
     else:
@@ -307,67 +276,21 @@ while current_Vff < Vf:
 
         if Check_5 == False and Check_6 == False and Check_7 == False and Check_8 == False:
             CentList = CentList + [Newcircle_5]
-            # this Vff will overwrite the previous one, add recursion?
+
             Vff = Vff + pi * Newcircle_5[2] ** 2.0 / (Wcomp * Hcomp)
             CentList = CentList + [Newcircle_6]
-            Vffqueue.enqueue(Vff)
-            # this Vff will overwrite the previous one, add recursion?
+
             Vff = Vff + pi * Newcircle_6[2] ** 2.0 / (Wcomp * Hcomp)
             CentList = CentList + [Newcircle_7]
-            Vffqueue.enqueue(Vff)
-            # this Vff will overwrite the previous one, add recursion?
+
             Vff = Vff + pi * Newcircle_7[2] ** 2.0 / (Wcomp * Hcomp)
             CentList = CentList + [Newcircle_8]
-            Vffqueue.enqueue(Vff)
-            # this Vff will overwrite the previous one, add recursion?
+
             Vff = Vff + pi * Newcircle_8[2] ** 2.0 / (Wcomp * Hcomp)
 
-            record.append(Vff)
-
-            if record[-1] != record[0]:
-                record = [Vff]
-            else:
-                record += [Vff]
-                record, Vff = recount_limit(CentList, Vff, record, 4, attempts)
-                # if len(record) > 2000:
-                #     CentList = CentList + [Newcircle_5]
-                #     Vff = Vff + pi * Newcircle_5[2] ** 2.0 / (Wcomp * Hcomp)
-                #     CentList = CentList + [Newcircle_6]
-                #     # this Vff will overwrite the previous one, add recursion?
-                #     Vff = Vff + pi * Newcircle_6[2] ** 2.0 / (Wcomp * Hcomp)
-                #     CentList = CentList + [Newcircle_7]
-                #     # this Vff will overwrite the previous one, add recursion?
-                #     Vff = Vff + pi * Newcircle_7[2] ** 2.0 / (Wcomp * Hcomp)
-                #     CentList = CentList + [Newcircle_8]
-                #     # this Vff will overwrite the previous one, add recursion?
-                #     Vff = Vff + pi * Newcircle_8[2] ** 2.0 / (Wcomp * Hcomp)
-                #     record = [Vff]
-                Vffqueue.enqueue(Vff)
-
-        Vffqueue.enqueue(Vff)
-
-    current_Vff = Vffqueue.dequeue()
-    print(Vff)   # FVF for each step
+    print(Vff, ",", prob, ",", diff)   # FVF for each step
 # print(CentList)  # The coordinate values of each fibre
-print('FVF:', Vff, '\n')   # The final FVF
-print(CentList)
-print(count)
 
 
-fig = plt.figure()
-ax = fig.add_subplot(111)
-rectan = Rectangle((0, 0), Wcomp, Hcomp, linewidth=0.8, edgecolor='red', facecolor='w',
-                   linestyle='solid', alpha=1.0)
-ax.add_patch(rectan)
-
-for Cir in CentList:
-    X = Cir[0]
-    Y = Cir[1]
-    R = Cir[2]
-    Cir = Circle(xy=(X, Y), radius=R, color='black', alpha=1.0)
-    ax.add_patch(Cir)
-    plt.axis('scaled')
-    # change limits of x or y axis so that equal increemets of x and y have the same length
-    plt.axis('equal')
-plt.show()
 #
+modelprint(Wcomp, Hcomp, 0.8, Vff, CentList)
