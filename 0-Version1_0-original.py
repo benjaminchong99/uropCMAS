@@ -84,6 +84,7 @@ print("begin")    # an indication for the user to know whether the codes is corr
 while Vff < Vf:
     prob = random()
     # print(prob)  # prob for each step when Vff < Vf
+    print(Vff)
 #    
 # for Part I, Rmax < X < Wcomp - Rmax, Rmax < Y < Hcomp - Rmax:
     if prob < ratio_PartI:
