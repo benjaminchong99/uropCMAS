@@ -38,3 +38,7 @@
 # tried  to use recursion but too many times repeatitions
 # record x and y coordiantes, check  the list, if its inside then skip it
 # use math.isclose(value, ref value, abs_tol = radius)
+
+08012011:
+
+# for i in existing centlist, if the radius from centre can take 1 more circle, slot the circle in

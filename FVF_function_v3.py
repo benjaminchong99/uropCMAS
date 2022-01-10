@@ -14,7 +14,7 @@ def intersection(r1, cent1, r2, cent2, tol):
                 ** 2) ** 0.5  # pythagoras thm
     min_distance = r1 + r2 + tol  # minimum distance between two centres of circle
 
-    if distance > min_distance:
+    if distance >= min_distance:
         overlap = False
     else:
         overlap = True
@@ -56,8 +56,8 @@ def plot_pdfgraph(x_range_int, y_range, y, line_label, x_label, y_label, line_ty
 
 def modelprint(width, height, lw, vff, centlist):
     # generate model
-    print('FVF:', vff, '\n')   # The final FVF
     print(centlist)
+    print('FVF:', vff, '\n')   # The final FVF
 
     fig = plt.figure()
     ax = fig.add_subplot(111)
@@ -77,6 +77,40 @@ def modelprint(width, height, lw, vff, centlist):
     plt.show()
 
 
+def fillcircle(centlist, vff):
+    og = len(centlist)
+    print("start", og)
+    i = 0
+    while i < len(centlist):
+        # overlap
+        # tilt one degree
+        if centlist[i][1] > 0.8 or centlist[i][1] < 0 or centlist[i][0] > 0.8 or centlist[i][0] < 0:
+            pass
+        else:
+            radius = 2*centlist[i][2] + tol
+            angle = 0
+            while angle < 360:
+                x_diff = radius * cos(angle/180*pi)
+                y_diff = radius * sin(angle/180*pi)
+                imagcent = [centlist[i][0] + x_diff,
+                            centlist[i][1] + y_diff, centlist[i][2]]
+                # check imagcent
+
+                if imagcent[1] > 0.8 or imagcent[1] < 0 or imagcent[0] > 0.8 or imagcent[0] < 0:
+                    pass
+                else:
+                    indicator = check_a_circle(imagcent, centlist, tol)
+                    if indicator == False:
+                        # never overlap
+                        centlist = centlist + [imagcent]
+                        vff = vff + add_vff(imagcent[2], width, height)
+                        print("increase")
+                angle += 1
+            print('done checking ', i, "/", len(centlist), og)
+        i += 1
+    return centlist, vff
+
+
 """START OF COMPUTATION"""
 # Variable parameters
 count = 0
@@ -84,14 +118,11 @@ rmax = 0.016  # the maxmum radius of the fibres
 rmin = 0.016  # the minmum radius of the fibres
 width = rmax*50  # 0.8   # the length of the RVE
 height = rmax*50  # 0.8 # the width of the RVE
-tol = 0.0001  # the minmum distance of two circles (except for the radius)
+tol = 0.0005  # the minmum distance of two circles (except for the radius)
 vf = 0.55    # the FVF in the RVE
 # with every circle added to the model
 # cap at 0.55
 #
-
-listofx = []
-listofy = []
 
 # Algorithm of generating random distributing fibres
 # Ratio of each part to the whole RVE area
@@ -193,36 +224,6 @@ while vff < vf:
                 newcircle_7[2], width, height) + add_vff(newcircle_8[2], width, height)
 
         print(vff, ",", prob)  # FVF for each step
-
 modelprint(width, height, 0.8, vff, centlist)
-
-'''
-pseudocode to record list of x and y coordinates
-
-while False:
-    compare i in listofx with x and i in listofy with y using math.isclose(x,i, abs_tol = (radius + tol))
-    if either one is False:
-        generate new x and y
-    else:
-        listofx.append(x) 
-        listofy.append(y)
-        break and return values of x and y
-
-'''
-
-
-def pt_validity(newcircle, tol, centlist):
-    overlap = True
-    abs_tol = newcircle[2] + tol
-    count = 0
-    while overlap == True and count < len(centlist):
-        # count until end of centlist
-        if isclose(newcircle[0], centlist[count][0], abs_tol) == True or isclose(newcircle[1], centlist[count][1], abs_tol) == True:
-            count += 1
-        else:
-            # got space to put the circle
-            overlap = False
-            listofx.append(newcircle[0])
-            listofy.append(newcircle[1])
-
-    return listofx, listofy, overlap
+centlist, vff = fillcircle(centlist, vff)
+modelprint(width, height, 0.8, vff, centlist)
