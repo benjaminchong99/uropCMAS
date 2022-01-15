@@ -6,7 +6,7 @@ from math import *
 from sklearn.neighbors import KDTree
 from scipy import spatial
 from astropy.stats import RipleysKEstimator
-from matplotlib import interactive, pyplot as plt
+from matplotlib import pyplot as plt
 
 
 def intersection(r1, cent1, r2, cent2, tol):
@@ -74,6 +74,11 @@ def modelprint(width, height, lw, vff, centlist):
         plt.axis('scaled')
         # change limits of x or y axis so that equal increemets of x and y have the same length
         plt.axis('equal')
+
+    centlist = sorted(centlist)
+    # modelprint(width, height, 0.8, vff, centlist)
+    shift_to_neighbours(centlist)
+
     plt.show()
 
 
@@ -111,6 +116,59 @@ def fillcircle(centlist, vff):
     return centlist, vff
 
 
+def shift_to_neighbours(centlist):
+    # brute force way to find neighbours and shift points
+    all_neighbours = {}
+    for point in centlist:
+        neighbors = []
+        for others in centlist:
+            print('new')
+            # make sure the other point is not the current point or previous points
+            if others == point:
+                print("pass")
+                pass
+            # elif (others[0], others[1]) in all_neighbours.keys() or (others[0], others[1]) in all_neighbours.values():
+                # print('pass')
+                # pass
+            # point is not repeated
+            else:
+                print('inside')
+                indication = intersection(
+                    point[2], point, others[2], others, point[2]+tol)
+                if indication == True:
+                    print("true")
+                    neighbors.append((others[0], others[1]))
+                else:
+                    print("false")
+        if len(neighbors) == 0:
+            pass
+        else:
+            all_neighbours[(point[0], point[1])] = neighbors
+
+    print(all_neighbours, len(all_neighbours))
+    # got the neighbours, draw line for illustration
+    for key, value in all_neighbours.items():
+        all_x = []
+        all_y = []
+        for element in value:
+            x_values = [key[0], element[0]]
+            y_values = [key[1], element[1]]
+            all_x.append(x_values)
+            all_y.append(y_values)
+
+        r = random()
+        b = random()
+        g = random()
+        markers = ['o', 'v', '1', '8', 's', 'p', '*', 'h', '+', 'x', 'D']
+        counter = choice(markers)
+        for i in range(len(all_x)):
+            color = (r, g, b)
+            plt.plot(all_x[i], all_y[i], c=color,
+                     marker=counter, markersize=10, linestyle="-", linewidth=2)
+    plt.show()
+    # got the neighbours, need to shift the space
+
+
 """START OF COMPUTATION"""
 # Variable parameters
 count = 0
@@ -119,7 +177,7 @@ rmin = 0.016  # the minmum radius of the fibres
 width = rmax*50  # 0.8   # the length of the RVE
 height = rmax*50  # 0.8 # the width of the RVE
 tol = 0.0005  # the minmum distance of two circles (except for the radius)
-vf = 0.55    # the FVF in the RVE
+vf = 0.45    # the FVF in the RVE
 # with every circle added to the model
 # cap at 0.55
 #
@@ -225,5 +283,7 @@ while vff < vf:
 
         print(vff, ",", prob)  # FVF for each step
 modelprint(width, height, 0.8, vff, centlist)
-centlist, vff = fillcircle(centlist, vff)
-modelprint(width, height, 0.8, vff, centlist)
+# centlist, vff = fillcircle(centlist, vff)
+# centlist = sorted(centlist)
+# modelprint(width, height, 0.8, vff, centlist)
+# shift_to_neighbours(centlist)
