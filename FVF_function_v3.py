@@ -34,7 +34,7 @@ def check_a_circle(cent1, centlist, tol):
 
 def ran(x1, x2):
     # randomise
-    # used to generate random points in the chosen region
+    # used to generate random centlist[i]s in the chosen region
     return ((x2 - x1) * np.random.rand() + x1)
 
 
@@ -119,34 +119,31 @@ def fillcircle(centlist, vff):
 def shift_to_neighbours(centlist):
     # brute force way to find neighbours and shift points
     all_neighbours = {}
-    for point in centlist:
+    for i in range(len(centlist)):
+        print(f"Checked: {i}/{len(centlist)}")
         neighbors = []
         for others in centlist:
-            print('new')
             # make sure the other point is not the current point or previous points
-            if others == point:
-                print("pass")
+            if others == centlist[i]:
                 pass
             # elif (others[0], others[1]) in all_neighbours.keys() or (others[0], others[1]) in all_neighbours.values():
                 # print('pass')
                 # pass
-            # point is not repeated
+            # centlist[i] is not repeated
             else:
-                print('inside')
                 indication = intersection(
-                    point[2], point, others[2], others, point[2]+tol)
+                    centlist[i][2], centlist[i], others[2], others, centlist[i][2]+tol)
                 if indication == True:
                     print("true")
                     neighbors.append((others[0], others[1]))
-                else:
-                    print("false")
         if len(neighbors) == 0:
             pass
         else:
-            all_neighbours[(point[0], point[1])] = neighbors
+            all_neighbours[(centlist[i][0], centlist[i][1])] = neighbors
 
     print(all_neighbours, len(all_neighbours))
     # got the neighbours, draw line for illustration
+    # plotting purposes
     for key, value in all_neighbours.items():
         all_x = []
         all_y = []
@@ -159,12 +156,14 @@ def shift_to_neighbours(centlist):
         r = random()
         b = random()
         g = random()
-        markers = ['o', 'v', '1', '8', 's', 'p', '*', 'h', '+', 'x', 'D']
+        markers = ['v', '1', '8', 's', 'p', '*', 'h', '+', 'x', 'D']
         counter = choice(markers)
         for i in range(len(all_x)):
             color = (r, g, b)
             plt.plot(all_x[i], all_y[i], c=color,
                      marker=counter, markersize=10, linestyle="-", linewidth=2)
+    for key in all_neighbours:
+        plt.plot(key[0], key[1], c='red', marker="o")
     plt.show()
     # got the neighbours, need to shift the space
 
@@ -282,8 +281,8 @@ while vff < vf:
                 newcircle_7[2], width, height) + add_vff(newcircle_8[2], width, height)
 
         print(vff, ",", prob)  # FVF for each step
+centlist, vff = fillcircle(centlist, vff)
+centlist = sorted(centlist)
 modelprint(width, height, 0.8, vff, centlist)
-# centlist, vff = fillcircle(centlist, vff)
-# centlist = sorted(centlist)
 # modelprint(width, height, 0.8, vff, centlist)
 # shift_to_neighbours(centlist)
