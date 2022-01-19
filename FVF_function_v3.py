@@ -75,9 +75,10 @@ def modelprint(width, height, lw, vff, centlist):
         # change limits of x or y axis so that equal increemets of x and y have the same length
         plt.axis('equal')
 
-    centlist = sorted(centlist)
+    # centlist = sorted(centlist)
     # modelprint(width, height, 0.8, vff, centlist)
-    shift_to_neighbours(centlist)
+    # shift_to_neighbours(centlist)
+    findspaced(centlist, 0.0005, vff)
 
     plt.show()
 
@@ -168,6 +169,85 @@ def shift_to_neighbours(centlist):
     # got the neighbours, need to shift the space
 
 
+def findspaced(centlist, tol, vff):
+    spaced = []
+    for i in range(len(centlist)):
+        indication = check_a_circle(centlist[i], centlist, tol)
+        print(indication)
+        if indication == True:
+            spaced.append(centlist[i])
+    print(spaced)
+    for i in range(len(spaced)):
+        plt.plot(spaced[i][0], spaced[i][1], c='red', marker="o")
+        plt.text(spaced[i][0], spaced[i][1], str(i), color='blue', fontsize=12)
+    plt.show()
+    movespaced(centlist, vff)
+
+
+def movespaced(centlist, vff):
+    answer = input("type in the numbered circle: ")
+    if answer == "nil":
+        plt.show()
+    elif not answer.isnumeric:
+        print("invalid input, try again.")
+        movespaced(centlist, vff)
+    else:
+        index = int(answer)
+        answer2 = input(
+            f"Chosen circle {answer}, coordinates: {centlist[index][0], centlist[index][1]}. Enter distance move in x and y: ")
+        # movement in terms of fixed units?
+        movement = answer2.split(" ")
+        # need to add distance to the point
+        # store og position first
+        storage = centlist[index]
+        centlist[index] = [centlist[index][0] +
+                           float(movement[0]), centlist[index][1] + float(movement[1]), centlist[index][2]]
+        print(centlist[index])
+        print(movement)
+        # check the validity of the movement before you move forward with moving the point
+        comparelist = centlist[:]
+        comparelist.remove(centlist[index])
+        indicator = check_a_circle(centlist[index], comparelist, tol)
+        if indicator == False:
+            print('enter when no overlap')
+            nonsense = input('enter to confirm')
+            centlist, vff = single_fillcircle(centlist[index], centlist, vff)
+
+        # else reject and ask to move the point again
+        else:
+            print("invalid movement, try again")
+            centlist[index] = storage
+            nonsense = input('enter to confirm')
+        modelprint(width, height, 0.8, vff, centlist)
+
+        plt.show()
+
+
+def single_fillcircle(circle, centlist, vff):
+    if circle[1] > 0.8 or circle[1] < 0 or circle[0] > 0.8 or circle[0] < 0:
+        pass
+    else:
+        radius = 2*circle[2] + tol
+        angle = 0
+        while angle < 360:
+            x_diff = radius * cos(angle/180*pi)
+            y_diff = radius * sin(angle/180*pi)
+            imagcent = [circle[0] + x_diff,
+                        circle[1] + y_diff, circle[2]]
+            # check imagcent
+            if imagcent[1] > 0.8 or imagcent[1] < 0 or imagcent[0] > 0.8 or imagcent[0] < 0:
+                pass
+            else:
+                indicator = check_a_circle(imagcent, centlist, tol)
+                if indicator == False:
+                    # never overlap
+                    centlist = centlist + [imagcent]
+                    vff = vff + add_vff(imagcent[2], width, height)
+                    print("increase")
+            angle += 1
+    return centlist, vff
+
+
 """START OF COMPUTATION"""
 # Variable parameters
 count = 0
@@ -175,7 +255,7 @@ rmax = 0.016  # the maxmum radius of the fibres
 rmin = 0.016  # the minmum radius of the fibres
 width = rmax*50  # 0.8   # the length of the RVE
 height = rmax*50  # 0.8 # the width of the RVE
-tol = 0.0005  # the minmum distance of two circles (except for the radius)
+tol = 0.001  # the minmum distance of two circles (except for the radius)
 vf = 0.45    # the FVF in the RVE
 # with every circle added to the model
 # cap at 0.55
@@ -282,7 +362,7 @@ while vff < vf:
 
         print(vff, ",", prob)  # FVF for each step
 centlist, vff = fillcircle(centlist, vff)
-centlist = sorted(centlist)
+# centlist = sorted(centlist)
 modelprint(width, height, 0.8, vff, centlist)
 # modelprint(width, height, 0.8, vff, centlist)
 # shift_to_neighbours(centlist)
