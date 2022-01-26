@@ -3,13 +3,12 @@ import numpy as np
 
 from random import *
 from math import *
-from sklearn.neighbors import KDTree
-from scipy import spatial
-from astropy.stats import RipleysKEstimator
 from matplotlib import pyplot as plt
+from sympy import comp
 
 
 def intersection(r1, cent1, r2, cent2, tol):
+    # inside check_a_circle function to determine whether 2 circles intersect
     distance = ((cent1[0] - cent2[0]) ** 2 + (cent1[1] - cent2[1])
                 ** 2) ** 0.5  # pythagoras thm
     min_distance = r1 + r2 + tol  # minimum distance between two centres of circle
@@ -22,7 +21,7 @@ def intersection(r1, cent1, r2, cent2, tol):
 
 
 def check_a_circle(cent1, centlist, tol):
-
+    # to determine if a circle intersects with any circles in the list
     r1 = cent1[2]
     for cent2 in centlist:
         r2 = cent2[2]
@@ -39,24 +38,14 @@ def ran(x1, x2):
 
 
 def add_vff(radius, width, height):
+    # shorten the adding of vff per circle
     return ((pi * radius ** 2) / (width*height))
 
 
-def plot_pdfgraph(x_range_int, y_range, y, line_label, x_label, y_label, line_type="--ro"):
-    # x_range_int is a list
-    # y_range is a list
-    plt.plot(np.arange(x_range_int[0], x_range_int[1],
-                       x_range_int[2]), y, line_type, label=line_label)
-    plt.xlabel(x_label)
-    plt.ylabel(y_label)
-    plt.ylim(y_range[0], y_range[1])
-    plt.legend(loc='upper right')
-    plt.show()
-
-
 def modelprint(width, height, lw, vff, centlist):
+    # plot function
     # generate model
-    print(centlist)
+    print(len(centlist))
     print('FVF:', vff, '\n')   # The final FVF
 
     fig = plt.figure()
@@ -77,13 +66,13 @@ def modelprint(width, height, lw, vff, centlist):
 
     # centlist = sorted(centlist)
     # modelprint(width, height, 0.8, vff, centlist)
-    # shift_to_neighbours(centlist)
-    findspaced(centlist, 0.0005, vff)
+    # namespaced(centlist, 0.0005, vff)
 
     plt.show()
 
 
 def fillcircle(centlist, vff):
+    # fill possible additional circles if possible
     og = len(centlist)
     print("start", og)
     i = 0
@@ -117,91 +106,74 @@ def fillcircle(centlist, vff):
     return centlist, vff
 
 
-def shift_to_neighbours(centlist):
-    # brute force way to find neighbours and shift points
-    all_neighbours = {}
+def namespaced(centlist, tol, vff, width, height):
+    # plot function
+    # name the circles
+    fig = plt.figure()
+    ax = fig.add_subplot(111)
+    rectan = Rectangle((0, 0), width, height, linewidth=0.8,
+                       edgecolor='red', facecolor='w', linestyle='solid', alpha=1.0)
+    ax.add_patch(rectan)
     for i in range(len(centlist)):
-        print(f"Checked: {i}/{len(centlist)}")
-        neighbors = []
-        for others in centlist:
-            # make sure the other point is not the current point or previous points
-            if others == centlist[i]:
-                pass
-            # elif (others[0], others[1]) in all_neighbours.keys() or (others[0], others[1]) in all_neighbours.values():
-                # print('pass')
-                # pass
-            # centlist[i] is not repeated
-            else:
-                indication = intersection(
-                    centlist[i][2], centlist[i], others[2], others, centlist[i][2]+tol)
-                if indication == True:
-                    print("true")
-                    neighbors.append((others[0], others[1]))
-        if len(neighbors) == 0:
-            pass
-        else:
-            all_neighbours[(centlist[i][0], centlist[i][1])] = neighbors
-
-    print(all_neighbours, len(all_neighbours))
-    # got the neighbours, draw line for illustration
-    # plotting purposes
-    for key, value in all_neighbours.items():
-        all_x = []
-        all_y = []
-        for element in value:
-            x_values = [key[0], element[0]]
-            y_values = [key[1], element[1]]
-            all_x.append(x_values)
-            all_y.append(y_values)
-
-        r = random()
-        b = random()
-        g = random()
-        markers = ['v', '1', '8', 's', 'p', '*', 'h', '+', 'x', 'D']
-        counter = choice(markers)
-        for i in range(len(all_x)):
-            color = (r, g, b)
-            plt.plot(all_x[i], all_y[i], c=color,
-                     marker=counter, markersize=10, linestyle="-", linewidth=2)
-    for key in all_neighbours:
-        plt.plot(key[0], key[1], c='red', marker="o")
+        X = centlist[i][0]
+        Y = centlist[i][1]
+        R = centlist[i][2]
+        draw_circle = Circle(xy=(X, Y), radius=R, color='black', alpha=1.0)
+        ax.add_patch(draw_circle)
+        plt.plot(centlist[i][0], centlist[i][1], c='red', marker="o")
+        plt.text(centlist[i][0], centlist[i][1],
+                 str(i), color='blue', fontsize=12)
+        plt.axis('scaled')
+        # change limits of x or y axis so that equal increemets of x and y have the same length
+        plt.axis('equal')
+    print(f"vff: {vff}, circles: {len(centlist)}")
     plt.show()
-    # got the neighbours, need to shift the space
+#    movespaced(centlist, vff, tol, width, height)
 
 
-def findspaced(centlist, tol, vff):
-    spaced = []
-    for i in range(len(centlist)):
-        indication = check_a_circle(centlist[i], centlist, tol)
-        print(indication)
-        if indication == True:
-            spaced.append(centlist[i])
-    print(spaced)
-    for i in range(len(spaced)):
-        plt.plot(spaced[i][0], spaced[i][1], c='red', marker="o")
-        plt.text(spaced[i][0], spaced[i][1], str(i), color='blue', fontsize=12)
-    plt.show()
-    movespaced(centlist, vff)
+def movespaced(centlist, vff, tol, width, height):
+    # manual moving of individual selected circles
+    answer = input(
+        f"type in the numbered circle (current max = {len(centlist)}) : ")
+    while not answer.isnumeric():
+        answer = input(
+            "invalid input, try again. Type in the numbered circle: ")
 
+    if int(answer) == len(centlist):
+        # fill circle
+        centlist, vff = fillcircle(centlist, vff)
+        modelprint(width, height, 0.8, vff, centlist)
+        namespaced(centlist, tol, vff, width, height)
 
-def movespaced(centlist, vff):
-    answer = input("type in the numbered circle: ")
-    if answer == "nil":
+    elif int(answer) > len(centlist):
+        print("out of range, end")
+        modelprint(width, height, 0.8, vff, centlist)
         plt.show()
-    elif not answer.isnumeric:
-        print("invalid input, try again.")
-        movespaced(centlist, vff)
+
     else:
         index = int(answer)
-        answer2 = input(
-            f"Chosen circle {answer}, coordinates: {centlist[index][0], centlist[index][1]}. Enter distance move in x and y: ")
-        # movement in terms of fixed units?
-        movement = answer2.split(" ")
-        # need to add distance to the point
         # store og position first
         storage = centlist[index]
-        centlist[index] = [centlist[index][0] +
-                           float(movement[0]), centlist[index][1] + float(movement[1]), centlist[index][2]]
+        movement = [width, height]
+        while abs(movement[0]) >= width or abs(movement[1]) >= height:
+            answer2 = input(
+                f"Chosen circle {answer}, coordinates: {centlist[index][0], centlist[index][1]}. Enter valid movement in x and y direction: ")
+            movement = answer2.split(" ")
+
+            if len(movement) < 2:
+                movement = [width, height]
+            else:
+                for i in range(len(movement)):
+                    movement[i] = float(movement[i])
+                # need to add distance to the point
+                centlist[index] = [centlist[index][0] +
+                                   float(movement[0]), centlist[index][1] + float(movement[1]), centlist[index][2]]
+                # check valid movement
+                if 0 < centlist[index][0] < width and 0 < centlist[index][1] < height:
+                    pass
+                else:
+                    centlist[index] = storage
+                    movement = [width, height]
         print(centlist[index])
         print(movement)
         # check the validity of the movement before you move forward with moving the point
@@ -219,11 +191,14 @@ def movespaced(centlist, vff):
             centlist[index] = storage
             nonsense = input('enter to confirm')
         modelprint(width, height, 0.8, vff, centlist)
+        namespaced(centlist, tol, vff, width, height)
 
         plt.show()
 
 
 def single_fillcircle(circle, centlist, vff):
+    # fill possible circles to an individual selected circle
+    # under movespaced function only
     if circle[1] > 0.8 or circle[1] < 0 or circle[0] > 0.8 or circle[0] < 0:
         pass
     else:
@@ -245,6 +220,33 @@ def single_fillcircle(circle, centlist, vff):
                     vff = vff + add_vff(imagcent[2], width, height)
                     print("increase")
             angle += 1
+    return centlist, vff
+
+
+def random_movement(centlist, tol, vff):
+    # automated random movement of circles in centlist
+    print('before ', len(centlist), vff, ' before')
+    for i in range(len(centlist)):
+        if centlist[i][1] > 0.784 or centlist[i][1] < 0.016 or centlist[i][0] > 0.784 or centlist[i][0] < 0.016:
+            pass
+        else:
+
+            temp_storage = centlist[i]
+            temp_x = centlist[i][0] + round(uniform(-0.01, 0.01), 4)
+            temp_y = centlist[i][1] + round(uniform(-0.01, 0.01), 4)
+            tempcircle = [temp_x, temp_y, centlist[i][2]]
+            comparelist = centlist[:]
+            temp_len = len(comparelist)
+            comparelist.remove(comparelist[i])
+            result = check_a_circle(tempcircle, comparelist, tol)
+            if result == False:
+                centlist[i] = tempcircle
+            print(f"Done: {i}/{len(centlist)}")
+    # useless = input(f"initial: {temp_len}, current: {len(centlist)}. Filling circles next")
+    centlist, vff = fillcircle(centlist, vff)
+    print(len(centlist), vff)
+    # modelprint(width, height, 0.8, vff, centlist)
+    # useless_checkpoint = input("returning centlist vff")
     return centlist, vff
 
 
@@ -362,7 +364,14 @@ while vff < vf:
 
         print(vff, ",", prob)  # FVF for each step
 centlist, vff = fillcircle(centlist, vff)
-# centlist = sorted(centlist)
 modelprint(width, height, 0.8, vff, centlist)
+# namespaced(centlist, tol, vff, width, height)
 # modelprint(width, height, 0.8, vff, centlist)
-# shift_to_neighbours(centlist)
+
+
+while vff < 0.6:
+    centlist, vff = random_movement(centlist, tol, vff)
+    # useless = input('shaken once, enter for result')
+namespaced(centlist, tol, vff, width, height)
+print('check space!')
+modelprint(width, height, 0.8, vff, centlist)
