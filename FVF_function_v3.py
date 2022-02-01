@@ -4,7 +4,6 @@ import numpy as np
 from random import *
 from math import *
 from matplotlib import pyplot as plt
-from sympy import comp
 
 
 def intersection(r1, cent1, r2, cent2, tol):
@@ -31,10 +30,13 @@ def check_a_circle(cent1, centlist, tol):
     return temp
 
 
+'''
 def ran(x1, x2):
     # randomise
+    # replaced with uniform() (random.uniform)
     # used to generate random centlist[i]s in the chosen region
     return ((x2 - x1) * np.random.rand() + x1)
+'''
 
 
 def add_vff(radius, width, height):
@@ -199,7 +201,8 @@ def movespaced(centlist, vff, tol, width, height):
 def single_fillcircle(circle, centlist, vff):
     # fill possible circles to an individual selected circle
     # under movespaced function only
-    if circle[1] > 0.8 or circle[1] < 0 or circle[0] > 0.8 or circle[0] < 0:
+    # y then x
+    if circle[1] > 0.8-circle[2] or circle[1] < 0+circle[2] or circle[0] > 0.8-circle[2] or circle[0] < 0+circle[2]:
         pass
     else:
         radius = 2*circle[2] + tol
@@ -227,22 +230,19 @@ def random_movement(centlist, tol, vff):
     # automated random movement of circles in centlist
     print('before ', len(centlist), vff, ' before')
     for i in range(len(centlist)):
-        if centlist[i][1] > 0.784 or centlist[i][1] < 0.016 or centlist[i][0] > 0.784 or centlist[i][0] < 0.016:
+        if centlist[i][1] > 0.8-centlist[i][2] or centlist[i][1] < 0+centlist[i][2] or centlist[i][0] > 0.8-centlist[i][2] or centlist[i][0] < 0+centlist[i][2]:
             pass
         else:
 
-            temp_storage = centlist[i]
             temp_x = centlist[i][0] + round(uniform(-0.01, 0.01), 4)
             temp_y = centlist[i][1] + round(uniform(-0.01, 0.01), 4)
             tempcircle = [temp_x, temp_y, centlist[i][2]]
             comparelist = centlist[:]
-            temp_len = len(comparelist)
             comparelist.remove(comparelist[i])
             result = check_a_circle(tempcircle, comparelist, tol)
             if result == False:
                 centlist[i] = tempcircle
             print(f"Done: {i}/{len(centlist)}")
-    # useless = input(f"initial: {temp_len}, current: {len(centlist)}. Filling circles next")
     centlist, vff = fillcircle(centlist, vff)
     print(len(centlist), vff)
     # modelprint(width, height, 0.8, vff, centlist)
@@ -258,7 +258,7 @@ rmin = 0.016  # the minmum radius of the fibres
 width = rmax*50  # 0.8   # the length of the RVE
 height = rmax*50  # 0.8 # the width of the RVE
 tol = 0.001  # the minmum distance of two circles (except for the radius)
-vf = 0.45    # the FVF in the RVE
+vf = 0.50    # the FVF in the RVE
 # with every circle added to the model
 # cap at 0.55
 #
@@ -279,7 +279,7 @@ ratio_PartIV = (4 * 2 * rmax * 2 * rmax) / \
 # ratio for 4 corners
 #
 
-centlist = [[ran(0, width), ran(0, height), ran(rmin, rmax)]]
+centlist = [[uniform(0, width), uniform(0, height), uniform(rmin, rmax)]]
 vff = (pi * centlist[0][2] ** 2) / (width*height)
 # vff = total area of circle / area of box
 
@@ -301,9 +301,9 @@ ratio_corners = ratio_PartI + ratio_PartII + ratio_PartIII + ratio_PartIV
 while vff < vf:
     prob = random()
     if prob < ratio_centre:
-        X = ran(0 + 1 * rmax, width - 1 * rmax)
-        Y = ran(0 + 1 * rmax, height - 1 * rmax)
-        R = ran(rmin, rmax)
+        X = uniform(0 + 1 * rmax, width - 1 * rmax)
+        Y = uniform(0 + 1 * rmax, height - 1 * rmax)
+        R = uniform(rmin, rmax)
         newcircle = [X, Y, R]
         check = check_a_circle(newcircle, centlist, tol)
         if check == False:
@@ -311,9 +311,9 @@ while vff < vf:
             vff = vff + add_vff(newcircle[2], width, height)
 
     elif ratio_centre <= prob < ratio_heights:
-        X = ran(0 - 1 * rmax, 0 + 1 * rmax)
-        Y = ran(0 + 1 * rmax, height - 1 * rmax)
-        R = ran(rmin, rmax)
+        X = uniform(0 - 1 * rmax, 0 + 1 * rmax)
+        Y = uniform(0 + 1 * rmax, height - 1 * rmax)
+        R = uniform(rmin, rmax)
         newcircle_1 = [X, Y, R]
         newcircle_2 = [X + width, Y, R]  # second circle at the opposing end
         check_1 = check_a_circle(newcircle_1, centlist, tol)
@@ -327,9 +327,9 @@ while vff < vf:
                 add_vff(newcircle_2[2], width, height)
 
     elif ratio_heights <= prob < ratio_widths:
-        X = ran(0 + 1 * rmax, width - 1 * rmax)
-        Y = ran(0 - 1 * rmax, 0 + 1 * rmax)
-        R = ran(rmin, rmax)
+        X = uniform(0 + 1 * rmax, width - 1 * rmax)
+        Y = uniform(0 - 1 * rmax, 0 + 1 * rmax)
+        R = uniform(rmin, rmax)
         newcircle_3 = [X, Y, R]
         newcircle_4 = [X, Y + height, R]  # second circle at the opposing end
         check_3 = check_a_circle(newcircle_3, centlist, tol)
@@ -342,9 +342,9 @@ while vff < vf:
                 add_vff(newcircle_4[2], width, height)
 
     else:
-        X = ran(0 - 1 * rmax, 0 + 1 * rmax)
-        Y = ran(0 - 1 * rmax, 0 + 1 * rmax)
-        R = ran(rmin, rmax)
+        X = uniform(0 - 1 * rmax, 0 + 1 * rmax)
+        Y = uniform(0 - 1 * rmax, 0 + 1 * rmax)
+        R = uniform(rmin, rmax)
         newcircle_5 = [X, Y, R]
         newcircle_6 = [X + width, Y, R]
         newcircle_7 = [X, Y + height, R]
