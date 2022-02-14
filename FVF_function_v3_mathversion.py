@@ -21,8 +21,6 @@ def intersection(r1, cent1, r2, cent2, tol):
 
 def check_a_circle(cent1, centlist, tol):
     # to determine if a circle intersects with any circles in the list
-    if len(centlist) == 0:
-        return False
     r1 = cent1[2]
     for cent2 in centlist:
         r2 = cent2[2]
@@ -203,8 +201,7 @@ def movespaced(centlist, vff, tol, width, height):
 def single_fillcircle(circle, centlist, vff):
     # fill possible circles to an individual selected circle
     # under movespaced function only
-    # y then x
-    if circle[1] > 0.8-circle[2] or circle[1] < 0+circle[2] or circle[0] > 0.8-circle[2] or circle[0] < 0+circle[2]:
+    if circle[1] > 0.8 or circle[1] < 0 or circle[0] > 0.8 or circle[0] < 0:
         pass
     else:
         radius = 2*circle[2] + tol
@@ -228,33 +225,91 @@ def single_fillcircle(circle, centlist, vff):
     return centlist, vff
 
 
-def random_movement(centlist, tol, vff):
-    # automated random movement of circles in centlist
-    print('before ', len(centlist), vff, ' before')
-    for i in range(len(centlist)):
-        if centlist[i][1] > 0.8-centlist[i][2] or centlist[i][1] < 0+centlist[i][2] or centlist[i][0] > 0.8-centlist[i][2] or centlist[i][0] < 0+centlist[i][2]:
+def setbounds(circle_i, centlist, rmax):
+    limit = 4*rmax
+    xcentre = circle_i
+    comparelist = centlist[:]
+    comparelist.remove(xcentre)
+    possiblecircles = []
+    for cir in range(len(comparelist)):
+        # hypotenuse the radius, compare it such that it must be less than 4r, add to new list
+        distance = ((xcentre[0] - comparelist[cir][0])**2 +
+                    (xcentre[1] - comparelist[cir][1])**2)**0.5
+        if distance < limit:
+            possiblecircles.append([comparelist[cir], cir])
+        else:
+            pass
+    # cap at a certian number of neighbours
+    return possiblecircles
+
+
+def closein(circle, idx, centlist, req_dis, tol):
+    # create linear equation
+    xcentre = circle
+    possiblecircles = setbounds(xcentre, centlist, xcentre[2])
+    if len(possiblecircles) == 0:
+        return centlist
+    else:
+        # [[circle,index],[circle,index],[circle,index]...]
+        """cannot random.uniform, must find space instead of randomise, if not its useless"""
+        theta = (pi)*uniform(-1, 1)
+        gradient = tan(theta)
+        constant_c = xcentre[0]*gradient - xcentre[1]
+        # linear_eqn = gradient*x + constant
+        print("theta:", theta)
+        print(gradient)
+
+        x_1, y_1 = xcentre[0], xcentre[1]
+        h_list = []
+        for neighbours in possiblecircles:
+            x_2, y_2 = neighbours[0][0], neighbours[0][1]
+
+            # abs(tan(theta)*x_2 - y_2 + (y_1 - tan(theta)*x_1))/sqrt(tan(theta)**2 + (-1)**2)
+            upperequation = abs(tan(theta)*x_2 - y_2 + (y_1 - tan(theta)*x_1))
+            lowerequation = (tan(theta)**2 + (-1)**2)**0.5
+            h = upperequation/lowerequation
+            h_list = h_list + [h]
+        print("h_list: ", h_list)
+        min_h = min(h_list)
+        index_nearest = h_list.index(min(h_list))
+        x_3, y_3 = possiblecircles[index_nearest][0][0], possiblecircles[index_nearest][0][1]
+
+        # pythagoras
+        # part1eqn = (req_dis)**2 - (gradient*x_1 + y_1-gradient*x_1)
+        # circumference eqn with varied angle alpha
+        alpha = 2*pi - acos((min_h/(req_dis)) % 1)
+        print('alpha: ', alpha)
+
+        circum_x = x_3 + req_dis*cos(alpha)
+        circum_y = y_3 + req_dis*sin(alpha)
+        comparelist = centlist[:]
+        comparelist.remove(comparelist[idx])
+        current_cir = [circum_x, circum_y,
+                       possiblecircles[index_nearest][0][2]]
+
+        indicator = check_a_circle(
+            current_cir, comparelist, tol)
+        if indicator == True:
             pass
         else:
+            centlist[idx] = current_cir
+        return centlist
+        # modelprint(width, height, 0.8, centlist, rmax, possiblecircles)
 
-            temp_x = centlist[i][0] + round(uniform(-0.01, 0.01), 4)
-            temp_y = centlist[i][1] + round(uniform(-0.01, 0.01), 4)
-            tempcircle = [temp_x, temp_y, centlist[i][2]]
-            comparelist = centlist[:]
-            comparelist.remove(comparelist[i])
-            result = check_a_circle(tempcircle, comparelist, tol)
-            if result == False:
-                centlist[i] = tempcircle
-            print(f"Done: {i}/{len(centlist)}")
-    centlist, vff = fillcircle(centlist, vff)
-    print(len(centlist), vff)
-    # modelprint(width, height, 0.8, vff, centlist)
-    # useless_checkpoint = input("returning centlist vff")
-    return centlist, vff
+
+def recursion(index, centlist, possiblecircles, vff):
+    if index == len(centlist):
+        modelprint(width, height, 0.8, vff, centlist)
+    else:
+        centlist = closein(centlist[index], index, centlist, rmax*2+tol, tol)
+        index = index + 1
+        recursion(index, centlist, possiblecircles, vff)
 
 
 """START OF COMPUTATION"""
 # Variable parameters
 count = 0
+possiblecircles = []
 rmax = 0.016  # the maxmum radius of the fibres
 rmin = 0.016  # the minmum radius of the fibres
 width = rmax*50  # 0.8   # the length of the RVE
@@ -298,27 +353,6 @@ ratio_centre = ratio_PartI
 ratio_heights = ratio_PartI + ratio_PartII
 ratio_widths = ratio_PartI + ratio_PartII + ratio_PartIII
 ratio_corners = ratio_PartI + ratio_PartII + ratio_PartIII + ratio_PartIV
-'''^change to use x and y and then compare straight away'''
-"""vff calculation only add one after every case"""
-
-center_list = []
-heightsLeft_list = []
-heightsRight_list = []
-widthsLeft_list = []
-widthsRight_list = []
-corners_list = []
-
-allCircles = {
-    "centre": [],
-    "leftside": [],
-    "rightside": [],
-    "topside": [],
-    "bottomside": [],
-    "bottomleft": [],
-    "bottomright": [],
-    "topleft": [],
-    "topright": []
-}
 
 
 while vff < vf:
@@ -331,12 +365,9 @@ while vff < vf:
         check = check_a_circle(newcircle, centlist, tol)
         if check == False:
             centlist = centlist + [newcircle]
-            # center area
-            allCircles["centre"].append(newcircle)
             vff = vff + add_vff(newcircle[2], width, height)
 
     elif ratio_centre <= prob < ratio_heights:
-        # left side and right side
         X = uniform(0 - 1 * rmax, 0 + 1 * rmax)
         Y = uniform(0 + 1 * rmax, height - 1 * rmax)
         R = uniform(rmin, rmax)
@@ -348,14 +379,10 @@ while vff < vf:
         if check_1 == False and check_2 == False:
             # never intersect with other circles
             centlist = centlist + [newcircle_1] + [newcircle_2]
-            # left side and right side
-            allCircles["leftside"].append(newcircle_1)
-            allCircles["rightside"].append(newcircle_2)
             vff = vff + \
                 add_vff(newcircle_1[2], width, height)
 
     elif ratio_heights <= prob < ratio_widths:
-        # top and bottom
         X = uniform(0 + 1 * rmax, width - 1 * rmax)
         Y = uniform(0 - 1 * rmax, 0 + 1 * rmax)
         R = uniform(rmin, rmax)
@@ -367,20 +394,16 @@ while vff < vf:
         if check_3 == False and check_4 == False:
             # never intersect with other circles
             centlist = centlist + [newcircle_3] + [newcircle_4]
-            # topside and bottomside
-            allCircles["bottomside"].append(newcircle_3)
-            allCircles["topside"].append(newcircle_4)
             vff = vff + add_vff(newcircle_3[2], width, height)
 
     else:
-        # 4 corners
         X = uniform(0 - 1 * rmax, 0 + 1 * rmax)
         Y = uniform(0 - 1 * rmax, 0 + 1 * rmax)
         R = uniform(rmin, rmax)
-        newcircle_5 = [X, Y, R]  # bottom left corner
-        newcircle_6 = [X + width, Y, R]  # bottom right corner
-        newcircle_7 = [X, Y + height, R]  # top left corner
-        newcircle_8 = [X + width, Y + height, R]  # top right corner
+        newcircle_5 = [X, Y, R]
+        newcircle_6 = [X + width, Y, R]
+        newcircle_7 = [X, Y + height, R]
+        newcircle_8 = [X + width, Y + height, R]
 
         check_5 = check_a_circle(newcircle_5, centlist, tol)
         check_6 = check_a_circle(newcircle_6, centlist, tol)
@@ -390,28 +413,21 @@ while vff < vf:
         if check_5 == False and check_6 == False and check_7 == False and check_8 == False:
             centlist = centlist + [newcircle_5] + \
                 [newcircle_6] + [newcircle_7] + [newcircle_8]
-            # 4 corners
-            allCircles["bottomleft"].append(newcircle_5)
-            allCircles["bottomright"].append(newcircle_6)
-            allCircles["topleft"].append(newcircle_7)
-            allCircles["topright"].append(newcircle_8)
+
             vff = vff + add_vff(newcircle_5[2], width, height)
 
         print(vff, ",", prob)  # FVF for each step
-for keys in allCircles:
-    print(len(allCircles[keys]))
-
-# print("ALL CIRCLES :", len(allCircles))
-useless = input("ENDS here")
-centlist, vff = fillcircle(centlist, vff)
+# centlist, vff = fillcircle(centlist, vff)
 modelprint(width, height, 0.8, vff, centlist)
 # namespaced(centlist, tol, vff, width, height)
 # modelprint(width, height, 0.8, vff, centlist)
 
+index = 0
+recursion(index, centlist, possiblecircles, vff)
 
-while vff < 0.55:
-    centlist, vff = random_movement(centlist, tol, vff)
-    # useless = input('shaken once, enter for result')
-namespaced(centlist, tol, vff, width, height)
-print('check space!')
+# while vff < 0.6:
+# centlist, vff = random_movement(centlist, tol, vff)
+# useless = input('shaken once, enter for result')
+# namespaced(centlist, tol, vff, width, height)
+# print('check space!')
 modelprint(width, height, 0.8, vff, centlist)
