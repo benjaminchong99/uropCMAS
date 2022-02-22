@@ -4,6 +4,7 @@ import numpy as np
 from random import *
 from math import *
 from matplotlib import pyplot as plt
+from sympy import solve, Eq, symbols
 
 
 def intersection(r1, cent1, r2, cent2, tol):
@@ -22,6 +23,7 @@ def intersection(r1, cent1, r2, cent2, tol):
 def check_a_circle(cent1, centlist, tol):
     # to determine if a circle intersects with any circles in the list
     r1 = cent1[2]
+    temp = False
     for cent2 in centlist:
         r2 = cent2[2]
         temp = intersection(r1, cent1, r2, cent2, tol)
@@ -256,8 +258,8 @@ def closein(circle, idx, centlist, req_dis, tol):
         gradient = tan(theta)
         constant_c = xcentre[0]*gradient - xcentre[1]
         # linear_eqn = gradient*x + constant
-        print("theta:", theta)
-        print(gradient)
+        # print("theta:", theta)
+        # print(gradient)
 
         x_1, y_1 = xcentre[0], xcentre[1]
         h_list = []
@@ -269,7 +271,7 @@ def closein(circle, idx, centlist, req_dis, tol):
             lowerequation = (tan(theta)**2 + (-1)**2)**0.5
             h = upperequation/lowerequation
             h_list = h_list + [h]
-        print("h_list: ", h_list)
+        # print("h_list: ", h_list)
         min_h = min(h_list)
         index_nearest = h_list.index(min(h_list))
         x_3, y_3 = possiblecircles[index_nearest][0][0], possiblecircles[index_nearest][0][1]
@@ -277,22 +279,40 @@ def closein(circle, idx, centlist, req_dis, tol):
         # pythagoras
         # part1eqn = (req_dis)**2 - (gradient*x_1 + y_1-gradient*x_1)
         # circumference eqn with varied angle alpha
-        alpha = 2*pi - acos((min_h/(req_dis)) % 1)
-        print('alpha: ', alpha)
+        x, y = symbols('x y')
+        eq1 = Eq(-y + gradient*x + (y_1 - gradient*x_1), 0)
+        eq2 = Eq(-(req_dis)**2 + (x-x_3)**2 + (y-y_3)**2, 0)
 
-        circum_x = x_3 + req_dis*cos(alpha)
-        circum_y = y_3 + req_dis*sin(alpha)
-        comparelist = centlist[:]
-        comparelist.remove(comparelist[idx])
-        current_cir = [circum_x, circum_y,
-                       possiblecircles[index_nearest][0][2]]
+        solution = solve((eq1, eq2), (x, y))
+        # print("solution:", solution)
+        # print(solution[0][0], type(solution[0][0]))
 
-        indicator = check_a_circle(
-            current_cir, comparelist, tol)
-        if indicator == True:
+        try:
+            x_final = float(solution[0][0])
+            y_final = float(solution[1][0])
+
+        except:
+            x_final = "null"
+            y_final = "null"
+
+        if not isinstance(x_final, float) or not isinstance(y_final, float):
+            # print("pass")
             pass
         else:
-            centlist[idx] = current_cir
+            circum_x = solution[0][0]
+            circum_y = solution[1][0]
+            comparelist = centlist[:]
+            comparelist.remove(comparelist[idx])
+            current_cir = [circum_x, circum_y,
+                           possiblecircles[index_nearest][0][2]]
+
+            indicator = check_a_circle(current_cir, comparelist, tol)
+            if indicator == True:
+                pass
+            else:
+                print('centlist before: ', centlist, type(centlist))
+                centlist[idx] = current_cir
+                print('centlist after: ', centlist, type(centlist))
         return centlist
         # modelprint(width, height, 0.8, centlist, rmax, possiblecircles)
 
