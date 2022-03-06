@@ -272,7 +272,6 @@ def closein(circle, idx, centlist, req_dis, tol):
             h = upperequation/lowerequation
             h_list = h_list + [h]
         # print("h_list: ", h_list)
-        min_h = min(h_list)
         index_nearest = h_list.index(min(h_list))
         x_3, y_3 = possiblecircles[index_nearest][0][0], possiblecircles[index_nearest][0][1]
 
