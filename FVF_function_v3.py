@@ -102,7 +102,11 @@ def fillcircle(centlist, vff):
                         vff = vff + add_vff(imaginary_cent[2], width, height)
                         print("increase")
                 angle += 1
-            print('done checking ', i, "/", len(centlist), og)
+        print('done checking ', i, "/", len(centlist), og)
+        if i == round(0.6*og):
+            # marker, ratio to be determined
+            if len(centlist)-og <= 2:
+                i = len(centlist)  # stop and shake again to save time
         i += 1
     return centlist, vff
 
@@ -158,11 +162,12 @@ def random_movement(centlist, tol, vff, rmax):
                 round(uniform(-avail_range_ls[i] -
                               rmax, avail_range_ls[i]-rmax), 4)
             tempcircle = [temp_x, temp_y, centlist[i][2]]
-            comparelist = centlist[:]
-            comparelist.remove(comparelist[i])
-            result = check_a_circle(tempcircle, comparelist, tol)
-            if result == False:
-                centlist[i] = tempcircle
+            if (-rmax < temp_x < 0.8+rmax) and (-rmax < temp_y < 0.8+rmax):
+                comparelist = centlist[:]
+                comparelist.remove(comparelist[i])
+                result = check_a_circle(tempcircle, comparelist, tol)
+                if result == False:
+                    centlist[i] = tempcircle
             print(f"Done: {i}/{len(centlist)}")
     centlist, vff = fillcircle(centlist, vff)
     print(len(centlist), vff)
