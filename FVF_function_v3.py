@@ -1,5 +1,6 @@
 from matplotlib.patches import Circle, Rectangle
 import numpy as np
+import time
 
 from random import *
 from math import *
@@ -73,7 +74,7 @@ def model(width, height, lw, vff, centlist, dictionary):
     plt.show()
 
 
-def fillcircle(centlist, vff):
+def fillcircle(centlist, vff, dictionary):
     """fill possible additional circles if possible"""
     og = len(centlist)
     print("start", og)
@@ -99,6 +100,7 @@ def fillcircle(centlist, vff):
                     if indicator == False:
                         # never overlap
                         centlist = centlist + [imaginary_cent]
+                        dictionary[len(dictionary.items())] = imaginary_cent
                         vff = vff + add_vff(imaginary_cent[2], width, height)
                         print("increase")
                 angle += 1
@@ -135,7 +137,7 @@ def namespaced(centlist, tol, vff, width, height):
     plt.show()
 
 
-def random_movement(centlist, tol, vff, rmax):
+def random_movement(centlist, tol, vff, rmax, dictionary):
     """
     automated random movement of circles in centlist
     Supposedly generated until the vff hit
@@ -149,18 +151,26 @@ def random_movement(centlist, tol, vff, rmax):
     dist, ind = kdt.query(arr, k=2)
     avail_range = dist[:, 1]  # distance away from the closest neighbour
     avail_range_ls = np.ndarray.tolist(avail_range)
+    avail_idx = ind[:, 1]  # index
+    avail_idx_ls = np.ndarray.tolist(avail_idx)
     print('before ', len(centlist), vff, ' before')
+    print(dictionary)
 
     for i in range(len(centlist)):
         if centlist[i][1] > 0.8-centlist[i][2] or centlist[i][1] < 0+centlist[i][2] or centlist[i][0] > 0.8-centlist[i][2] or centlist[i][0] < 0+centlist[i][2]:
             pass
         else:
+            # x coord of nn - xcoord of current
+            ref_idx = avail_idx_ls[i]
+            print(ref_idx)
+            print(dictionary[ref_idx])
+            avail_x = abs(dictionary[ref_idx][0] - centlist[i][0])
+            avail_y = abs(dictionary[ref_idx][1] - centlist[i][1])
+
             temp_x = centlist[i][0] + \
-                round(uniform(-avail_range_ls[i] -
-                              rmax, avail_range_ls[i]-rmax), 4)
+                round(uniform(-avail_x, avail_x), 5)
             temp_y = centlist[i][1] + \
-                round(uniform(-avail_range_ls[i] -
-                              rmax, avail_range_ls[i]-rmax), 4)
+                round(uniform(-avail_y, avail_y), 5)
             tempcircle = [temp_x, temp_y, centlist[i][2]]
             if (-rmax < temp_x < 0.8+rmax) and (-rmax < temp_y < 0.8+rmax):
                 comparelist = centlist[:]
@@ -168,8 +178,9 @@ def random_movement(centlist, tol, vff, rmax):
                 result = check_a_circle(tempcircle, comparelist, tol)
                 if result == False:
                     centlist[i] = tempcircle
+                    dictionary[i] = tempcircle
             print(f"Done: {i}/{len(centlist)}")
-    centlist, vff = fillcircle(centlist, vff)
+    centlist, vff = fillcircle(centlist, vff, dictionary)
     print(len(centlist), vff)
     # model(width, height, 0.8, vff, centlist)
     # print_checkpoint = input("returning centlist vff")
@@ -182,7 +193,7 @@ def maincheck(X, Y, R, centlist, vff):
         check = check_a_circle(newcircle, centlist, tol)
         if check == False:
             centlist = centlist + [newcircle]
-            dictionary["cc"].append(newcircle)
+            dictionary[len(dictionary.items())] = newcircle
             # center area
             vff = vff + add_vff(newcircle[2], width, height)
 
@@ -197,8 +208,9 @@ def maincheck(X, Y, R, centlist, vff):
         if check_1 == False and check_2 == False:
             # never intersect with other circles
             centlist = centlist + [newcircle_1] + [newcircle_2]
-            dictionary["lh"].append(newcircle_1)
-            dictionary["rh"].append(newcircle_2)
+            dictionary[len(dictionary.items())] = newcircle_1
+            dictionary[len(dictionary.items())] = newcircle_2
+
             # left side and right side
             vff = vff + \
                 add_vff(newcircle_1[2], width, height)
@@ -213,9 +225,9 @@ def maincheck(X, Y, R, centlist, vff):
 
         if check_1 == False and check_2 == False:
             # never intersect with other circles
-            dictionary["rh"].append(newcircle_1)
-            dictionary["lh"].append(newcircle_2)
             centlist = centlist + [newcircle_1] + [newcircle_2]
+            dictionary[len(dictionary.items())] = newcircle_1
+            dictionary[len(dictionary.items())] = newcircle_2
             # left side and right side
             vff = vff + \
                 add_vff(newcircle_1[2], width, height)
@@ -229,9 +241,10 @@ def maincheck(X, Y, R, centlist, vff):
 
         if check_3 == False and check_4 == False:
             # never intersect with other circles
-            dictionary["bw"].append(newcircle_3)
-            dictionary["tw"].append(newcircle_4)
             centlist = centlist + [newcircle_3] + [newcircle_4]
+            dictionary[len(dictionary.items())] = newcircle_3
+            dictionary[len(dictionary.items())] = newcircle_4
+
             # topside and bottomside
             vff = vff + add_vff(newcircle_3[2], width, height)
     # top width
@@ -242,10 +255,10 @@ def maincheck(X, Y, R, centlist, vff):
         check_4 = check_a_circle(newcircle_4, centlist, tol)
 
         if check_3 == False and check_4 == False:
-            dictionary["tw"].append(newcircle_3)
-            dictionary["bw"].append(newcircle_4)
             # never intersect with other circles
             centlist = centlist + [newcircle_3] + [newcircle_4]
+            dictionary[len(dictionary.items())] = newcircle_3
+            dictionary[len(dictionary.items())] = newcircle_4
             # topside and bottomside
             vff = vff + add_vff(newcircle_3[2], width, height)
 
@@ -263,12 +276,12 @@ def maincheck(X, Y, R, centlist, vff):
         check_8 = check_a_circle(newcircle_8, centlist, tol)
 
         if check_5 == False and check_6 == False and check_7 == False and check_8 == False:
-            dictionary["ltc"].append(newcircle_7)
-            dictionary["rtc"].append(newcircle_8)
-            dictionary["lbc"].append(newcircle_5)
-            dictionary["rbc"].append(newcircle_6)
             centlist = centlist + [newcircle_5] + \
                 [newcircle_6] + [newcircle_7] + [newcircle_8]
+            dictionary[len(dictionary.items())] = newcircle_5
+            dictionary[len(dictionary.items())] = newcircle_6
+            dictionary[len(dictionary.items())] = newcircle_7
+            dictionary[len(dictionary.items())] = newcircle_8
             # 4 corners
             vff = vff + add_vff(newcircle_5[2], width, height)
 
@@ -285,12 +298,12 @@ def maincheck(X, Y, R, centlist, vff):
         check_8 = check_a_circle(newcircle_8, centlist, tol)
 
         if check_5 == False and check_6 == False and check_7 == False and check_8 == False:
-            dictionary["ltc"].append(newcircle_8)
-            dictionary["rtc"].append(newcircle_7)
-            dictionary["lbc"].append(newcircle_6)
-            dictionary["rbc"].append(newcircle_5)
             centlist = centlist + [newcircle_5] + \
                 [newcircle_6] + [newcircle_7] + [newcircle_8]
+            dictionary[len(dictionary.items())] = newcircle_5
+            dictionary[len(dictionary.items())] = newcircle_6
+            dictionary[len(dictionary.items())] = newcircle_7
+            dictionary[len(dictionary.items())] = newcircle_8
             # 4 corners
             vff = vff + add_vff(newcircle_5[2], width, height)
 
@@ -307,12 +320,12 @@ def maincheck(X, Y, R, centlist, vff):
         check_8 = check_a_circle(newcircle_8, centlist, tol)
 
         if check_5 == False and check_6 == False and check_7 == False and check_8 == False:
-            dictionary["ltc"].append(newcircle_5)
-            dictionary["rtc"].append(newcircle_6)
-            dictionary["lbc"].append(newcircle_7)
-            dictionary["rbc"].append(newcircle_8)
             centlist = centlist + [newcircle_5] + \
                 [newcircle_6] + [newcircle_7] + [newcircle_8]
+            dictionary[len(dictionary.items())] = newcircle_5
+            dictionary[len(dictionary.items())] = newcircle_6
+            dictionary[len(dictionary.items())] = newcircle_7
+            dictionary[len(dictionary.items())] = newcircle_8
             # 4 corners
             vff = vff + add_vff(newcircle_5[2], width, height)
 
@@ -329,13 +342,13 @@ def maincheck(X, Y, R, centlist, vff):
         check_8 = check_a_circle(newcircle_8, centlist, tol)
 
         if check_5 == False and check_6 == False and check_7 == False and check_8 == False:
-            dictionary["ltc"].append(newcircle_6)
-            dictionary["rtc"].append(newcircle_5)
-            dictionary["lbc"].append(newcircle_8)
-            dictionary["rbc"].append(newcircle_7)
 
             centlist = centlist + [newcircle_5] + \
                 [newcircle_6] + [newcircle_7] + [newcircle_8]
+            dictionary[len(dictionary.items())] = newcircle_5
+            dictionary[len(dictionary.items())] = newcircle_6
+            dictionary[len(dictionary.items())] = newcircle_7
+            dictionary[len(dictionary.items())] = newcircle_8
             # 4 corners
             vff = vff + add_vff(newcircle_5[2], width, height)
 
@@ -366,7 +379,10 @@ def specialmovements(circle, radius, tol, vff):
 
 ################################################################################
         """START OF COMPUTATION"""
+
+
 ################################################################################
+start = time.time()
 
 
 # Variable parameters
@@ -375,7 +391,7 @@ rmin = 0.016  # the minmum radius of the fibres
 width = rmax*50  # 0.8   # the length of the RVE
 height = rmax*50  # 0.8 # the width of the RVE
 tol = 0.001  # the minmum distance of two circles (except for the radius)
-target_vf = 0.55  # target FVF to hit
+target_vf = 0.6  # target FVF to hit
 preset_vf = 0.45    # the FVF in the RVE; to hit initially
 centlist = []  # initial empty space
 vff = 0
@@ -384,15 +400,6 @@ vff = 0
 # cap at 0.55 if don't want to wait
 
 dictionary = {
-    "cc": [],
-    "lh": [],
-    "rh": [],
-    "tw": [],
-    "bw": [],
-    "ltc": [],
-    "rtc": [],
-    "lbc": [],
-    "rbc": []
 }
 # put into the dictionary accordingly,
 # shift based on corresponding indexing in the list
@@ -402,20 +409,20 @@ dictionary = {
 # Algorithm of generating random distributing fibres
 print("begin")
 print("vff: ", vff, "\n Vf: ", target_vf)
-
-while vff < preset_vf:
+counting = 0
+# while vff < preset_vf:
+while counting < 500:
     # change to stright compare x and y
     X = uniform(0 - 1 * rmax, width + 1 * rmax)
     Y = uniform(0 - 1 * rmax, height + 1 * rmax)
     R = uniform(rmin, rmax)
     centlist, vff = maincheck(X, Y, R, centlist, vff)
-# print(dictionary)
-centlist, vff = fillcircle(centlist, vff)
+    counting += 1
+centlist, vff = fillcircle(centlist, vff, dictionary)
 model(width, height, 0.8, vff, centlist, dictionary)
 print(centlist)
-
 while vff < target_vf:
-    centlist, vff = random_movement(centlist, tol, vff, rmax)
+    centlist, vff = random_movement(centlist, tol, vff, rmax, dictionary)
 namespaced(centlist, tol, vff, width, height)
 print('check space!')
 print(centlist)
@@ -423,6 +430,8 @@ model(width, height, 0.8, vff, centlist, dictionary)
 
 # 470 for 0.55
 # 513 for 0.6
+end = time.time()
+print("Time: ", end - start)
 ################################################################################
 """ END OF COMPUTATION """
 ################################################################################
