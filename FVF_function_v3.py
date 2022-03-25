@@ -32,7 +32,13 @@ def check_a_circle(cent1, centlist, tol):
         temp = intersection(r1, cent1, r2, cent2, tol)
         if temp == True:
             return temp
+
     return temp
+
+    avail_range = dist[:, 1]  # distance away from the closest neighbour
+    avail_range_ls = np.ndarray.tolist(avail_range)
+    avail_idx = ind[:, 1]  # index
+    avail_idx_ls = np.ndarray.tolist(avail_idx)
 
 
 def add_vff(radius, width, height):
@@ -148,13 +154,14 @@ def random_movement(centlist, tol, vff, rmax, dictionary):
     kdt = KDTree(arr, leaf_size=30, metric="euclidean")
 
     # ind there to seperate out distanec and indexes
-    dist, ind = kdt.query(arr, k=2)
+    # dist, ind = kdt.query(arr, k=2)
+    dist, ind = kdt.query(arr, k=7)
     avail_range = dist[:, 1]  # distance away from the closest neighbour
     avail_range_ls = np.ndarray.tolist(avail_range)
     avail_idx = ind[:, 1]  # index
     avail_idx_ls = np.ndarray.tolist(avail_idx)
     print('before ', len(centlist), vff, ' before')
-    print(dictionary)
+    # print(dictionary)
 
     for i in range(len(centlist)):
         if centlist[i][1] > 0.8-centlist[i][2] or centlist[i][1] < 0+centlist[i][2] or centlist[i][0] > 0.8-centlist[i][2] or centlist[i][0] < 0+centlist[i][2]:
@@ -173,12 +180,29 @@ def random_movement(centlist, tol, vff, rmax, dictionary):
                 round(uniform(-avail_y, avail_y), 5)
             tempcircle = [temp_x, temp_y, centlist[i][2]]
             if (-rmax < temp_x < 0.8+rmax) and (-rmax < temp_y < 0.8+rmax):
+                # check intercepting
                 comparelist = centlist[:]
+                comparelist.append(tempcircle)
                 comparelist.remove(comparelist[i])
-                result = check_a_circle(tempcircle, comparelist, tol)
-                if result == False:
+
+                arrayc = np.array(comparelist)
+                kdtc = KDTree(arrayc, leaf_size=30, metric="euclidean")
+                distc, indc = kdtc.query(arrayc, k=7)  # // print this
+                lastc = distc[len(distc)-1, 1:]
+                result = True
+                tempcounter = 0
+                while tempcounter < len(lastc):
+                    if lastc[tempcounter] < (2*rmax + tol):
+                        result = False
+                    tempcounter = tempcounter + 1
+                if result == True:
                     centlist[i] = tempcircle
                     dictionary[i] = tempcircle
+
+                # result = check_a_circle(tempcircle, comparelist, tol)
+                # if result == False:
+                #     centlist[i] = tempcircle
+                #     dictionary[i] = tempcircle
             print(f"Done: {i}/{len(centlist)}")
     centlist, vff = fillcircle(centlist, vff, dictionary)
     print(len(centlist), vff)
@@ -423,7 +447,7 @@ model(width, height, 0.8, vff, centlist, dictionary)
 print(centlist)
 while vff < target_vf:
     centlist, vff = random_movement(centlist, tol, vff, rmax, dictionary)
-namespaced(centlist, tol, vff, width, height)
+# namespaced(centlist, tol, vff, width, height)
 print('check space!')
 print(centlist)
 model(width, height, 0.8, vff, centlist, dictionary)
