@@ -11,8 +11,8 @@ from sklearn.neighbors import KDTree
 
 def intersection(r1, cent1, r2, cent2, tol):
     """inside check_a_circle function to determine whether 2 circles intersect"""
-    distance = ((cent1[0] - cent2[0]) ** 2 + (cent1[1] - cent2[1])
-                ** 2) ** 0.5  # pythagoras thm
+    distance = ((cent1[0] - cent2[0]) ** 2 + (cent1[1] -
+                                              cent2[1]) ** 2) ** 0.5  # pythagoras thm
     min_distance = r1 + r2 + tol  # minimum distance between two centres of circle
 
     if distance >= min_distance:
@@ -29,16 +29,11 @@ def check_a_circle(cent1, centlist, tol):
     r1 = cent1[2]
     for cent2 in centlist:
         r2 = cent2[2]
-        temp = intersection(r1, cent1, r2, cent2, tol)
-        if temp == True:
-            return temp
+        check_overlap = intersection(r1, cent1, r2, cent2, tol)
+        if check_overlap == True:
+            return check_overlap
 
-    return temp
-
-    avail_range = dist[:, 1]  # distance away from the closest neighbour
-    avail_range_ls = np.ndarray.tolist(avail_range)
-    avail_idx = ind[:, 1]  # index
-    avail_idx_ls = np.ndarray.tolist(avail_idx)
+    return False
 
 
 def add_vff(radius, width, height):
@@ -49,7 +44,7 @@ def add_vff(radius, width, height):
 def model(width, height, lw, vff, centlist, dictionary):
     """ plot function, generate model"""
 
-    print('FVF:', vff, '\n')   # The final FVF
+    print('FVF:', vff, '\n')   # The current FVF
 
     fig = plt.figure()
     ax = fig.add_subplot(111)
@@ -57,16 +52,6 @@ def model(width, height, lw, vff, centlist, dictionary):
                        linestyle='solid', alpha=1.0)
     ax.add_patch(rectan)
 
-    # for values in dictionary.values():
-    #     for v in values:
-    #         X = v[0]
-    #         Y = v[1]
-    #         R = v[2]
-    #         draw_circle = Circle(xy=(X, Y), radius=R, color='black', alpha=1.0)
-    #         ax.add_patch(draw_circle)
-    #         plt.axis('scaled')
-    #         # change limits of x or y axis so that equal increemets of x and y have the same length
-    #         plt.axis('equal')
     for element in centlist:
         X = element[0]
         Y = element[1]
@@ -80,14 +65,14 @@ def model(width, height, lw, vff, centlist, dictionary):
     plt.show()
 
 
-def fillcircle(centlist, vff, dictionary):
+def fillcircle(centlist, vff, dictionary, rmax):
     """fill possible additional circles if possible"""
     og = len(centlist)
     print("start", og)
     i = 0
     while i < len(centlist):
         # tilt one degree
-        if centlist[i][1] > 0.8 or centlist[i][1] < 0 or centlist[i][0] > 0.8 or centlist[i][0] < 0:
+        if centlist[i][1] > 0.8-rmax or centlist[i][1] < 0+rmax or centlist[i][0] > 0.8-rmax or centlist[i][0] < 0+rmax:
             pass
         else:
             radius = 2*centlist[i][2] + tol
@@ -109,7 +94,7 @@ def fillcircle(centlist, vff, dictionary):
                         dictionary[len(dictionary.items())] = imaginary_cent
                         vff = vff + add_vff(imaginary_cent[2], width, height)
                         print("increase")
-                angle += 1
+                angle += 1  # go all 360 degrees
         print('done checking ', i, "/", len(centlist), og)
         if i == round(0.6*og):
             # marker, ratio to be determined
@@ -117,30 +102,6 @@ def fillcircle(centlist, vff, dictionary):
                 i = len(centlist)  # stop and shake again to save time
         i += 1
     return centlist, vff
-
-
-def namespaced(centlist, tol, vff, width, height):
-    """plot function, name the circles"""
-
-    fig = plt.figure()
-    ax = fig.add_subplot(111)
-    rectan = Rectangle((0, 0), width, height, linewidth=0.8,
-                       edgecolor='red', facecolor='w', linestyle='solid', alpha=1.0)
-    ax.add_patch(rectan)
-    for i in range(len(centlist)):
-        X = centlist[i][0]
-        Y = centlist[i][1]
-        R = centlist[i][2]
-        draw_circle = Circle(xy=(X, Y), radius=R, color='black', alpha=1.0)
-        ax.add_patch(draw_circle)
-        plt.plot(centlist[i][0], centlist[i][1], c='red', marker="o")
-        plt.text(centlist[i][0], centlist[i][1],
-                 str(i), color='blue', fontsize=12)
-        plt.axis('scaled')
-        # change limits of x or y axis so that equal increemets of x and y have the same length
-        plt.axis('equal')
-    print(f"vff: {vff}, circles: {len(centlist)}")
-    plt.show()
 
 
 def random_movement(centlist, tol, vff, rmax, dictionary):
@@ -152,13 +113,11 @@ def random_movement(centlist, tol, vff, rmax, dictionary):
     # KDTree
     arr = np.array(centlist)
     kdt = KDTree(arr, leaf_size=30, metric="euclidean")
-
     # ind there to seperate out distanec and indexes
-    # dist, ind = kdt.query(arr, k=2)
-    dist, ind = kdt.query(arr, k=7)
-    avail_range = dist[:, 1]  # distance away from the closest neighbour
+    dist, ind = kdt.query(arr, k=7)  # 7 columns including original
+    avail_range = dist[:, 1:]  # distance away from the closest neighbour
     avail_range_ls = np.ndarray.tolist(avail_range)
-    avail_idx = ind[:, 1]  # index
+    avail_idx = ind[:, 1:]  # index
     avail_idx_ls = np.ndarray.tolist(avail_idx)
     print('before ', len(centlist), vff, ' before')
     # print(dictionary)
@@ -168,43 +127,39 @@ def random_movement(centlist, tol, vff, rmax, dictionary):
             pass
         else:
             # x coord of nn - xcoord of current
-            ref_idx = avail_idx_ls[i]
-            print(ref_idx)
-            print(dictionary[ref_idx])
-            avail_x = abs(dictionary[ref_idx][0] - centlist[i][0])
-            avail_y = abs(dictionary[ref_idx][1] - centlist[i][1])
+            ref_idx = avail_idx_ls[i]  # find the list of neighbours index
+            neighcount = 0
+            # print(str(dictionary[ref_idx]))
+            while neighcount < 2:
+                if dictionary[ref_idx[neighcount]][1] > 0.8-centlist[i][2] or dictionary[ref_idx[neighcount]][1] < 0+centlist[i][2] or dictionary[ref_idx[neighcount]][0] > 0.8-centlist[i][2] or dictionary[ref_idx[neighcount]][0] < 0+centlist[i][2]:
+                    neighcount += 1
+                else:
+                    # print(ref_idx)
+                    # print(dictionary[ref_idx])
+                    avail_x = abs(
+                        dictionary[ref_idx[neighcount]][0] - centlist[i][0])
+                    avail_y = abs(
+                        dictionary[ref_idx[neighcount]][1] - centlist[i][1])
 
-            temp_x = centlist[i][0] + \
-                round(uniform(-avail_x, avail_x), 5)
-            temp_y = centlist[i][1] + \
-                round(uniform(-avail_y, avail_y), 5)
-            tempcircle = [temp_x, temp_y, centlist[i][2]]
-            if (-rmax < temp_x < 0.8+rmax) and (-rmax < temp_y < 0.8+rmax):
-                # check intercepting
-                comparelist = centlist[:]
-                comparelist.append(tempcircle)
-                comparelist.remove(comparelist[i])
-
-                arrayc = np.array(comparelist)
-                kdtc = KDTree(arrayc, leaf_size=30, metric="euclidean")
-                distc, indc = kdtc.query(arrayc, k=7)  # // print this
-                lastc = distc[len(distc)-1, 1:]
-                result = True
-                tempcounter = 0
-                while tempcounter < len(lastc):
-                    if lastc[tempcounter] < (2*rmax + tol):
-                        result = False
-                    tempcounter = tempcounter + 1
-                if result == True:
-                    centlist[i] = tempcircle
-                    dictionary[i] = tempcircle
-
-                # result = check_a_circle(tempcircle, comparelist, tol)
-                # if result == False:
-                #     centlist[i] = tempcircle
-                #     dictionary[i] = tempcircle
-            print(f"Done: {i}/{len(centlist)}")
-    centlist, vff = fillcircle(centlist, vff, dictionary)
+                    temp_x = centlist[i][0] + \
+                        round(uniform(-avail_x, avail_x), 5)
+                    temp_y = centlist[i][1] + \
+                        round(uniform(-avail_y, avail_y), 5)
+                    tempcircle = [temp_x, temp_y, centlist[i][2]]
+                    if (-rmax < temp_x < 0.8+rmax) and (-rmax < temp_y < 0.8+rmax):
+                        # check intercepting; revert back to normal checking
+                        comparelist = centlist[:]
+                        # comparelist.append(tempcircle)
+                        comparelist.remove(comparelist[i])
+                        check_overlap = check_a_circle(
+                            tempcircle, comparelist, tol)
+                        if check_overlap == False:
+                            centlist[i] = tempcircle
+                            dictionary[i] = tempcircle
+                            neighcount = 10
+                        neighcount += 1
+        print(f"Done: {i}/{len(centlist)}")
+    centlist, vff = fillcircle(centlist, vff, dictionary, rmax)
     print(len(centlist), vff)
     # model(width, height, 0.8, vff, centlist)
     # print_checkpoint = input("returning centlist vff")
@@ -212,6 +167,7 @@ def random_movement(centlist, tol, vff, rmax, dictionary):
 
 
 def maincheck(X, Y, R, centlist, vff):
+    """MOST PARTS OF THE ALGORITHM HAPPENS HERE, SHOULD NOT HAVE MUCH CHANGES"""
     if (rmax <= X <= (width-rmax)) and (rmax <= Y <= (height-rmax)):
         newcircle = [X, Y, R]
         check = check_a_circle(newcircle, centlist, tol)
@@ -236,8 +192,7 @@ def maincheck(X, Y, R, centlist, vff):
             dictionary[len(dictionary.items())] = newcircle_2
 
             # left side and right side
-            vff = vff + \
-                add_vff(newcircle_1[2], width, height)
+            vff = vff + add_vff(newcircle_1[2], width, height)
 
     # right height
     elif ((width-rmax) <= X <= (width+rmax)) and (rmax <= Y <= (height-rmax)):
@@ -253,8 +208,7 @@ def maincheck(X, Y, R, centlist, vff):
             dictionary[len(dictionary.items())] = newcircle_1
             dictionary[len(dictionary.items())] = newcircle_2
             # left side and right side
-            vff = vff + \
-                add_vff(newcircle_1[2], width, height)
+            vff = vff + add_vff(newcircle_1[2], width, height)
 
     # bottom width
     elif (rmax <= X <= (width-rmax) and (-rmax <= Y <= rmax)):
@@ -442,7 +396,7 @@ while counting < 500:
     R = uniform(rmin, rmax)
     centlist, vff = maincheck(X, Y, R, centlist, vff)
     counting += 1
-centlist, vff = fillcircle(centlist, vff, dictionary)
+centlist, vff = fillcircle(centlist, vff, dictionary, rmax)
 model(width, height, 0.8, vff, centlist, dictionary)
 print(centlist)
 while vff < target_vf:
