@@ -1,3 +1,5 @@
+from astropy.stats import RipleysKEstimator
+from scipy import spatial
 from matplotlib.patches import Circle, Rectangle
 import numpy as np
 import time
@@ -84,7 +86,7 @@ def fillcircle(centlist, vff, dictionary, rmax):
                                   centlist[i][1] + y_diff, centlist[i][2]]
                 # check imaginary_cent
 
-                if imaginary_cent[1] > 0.8 or imaginary_cent[1] < 0 or imaginary_cent[0] > 0.8 or imaginary_cent[0] < 0:
+                if imaginary_cent[1] > 0.8-rmax or imaginary_cent[1] < 0+rmax or imaginary_cent[0] > 0.8-rmax or imaginary_cent[0] < 0+rmax:
                     pass
                 else:
                     indicator = check_a_circle(imaginary_cent, centlist, tol)
@@ -96,7 +98,7 @@ def fillcircle(centlist, vff, dictionary, rmax):
                         print("increase")
                 angle += 1  # go all 360 degrees
         print('done checking ', i, "/", len(centlist), og)
-        if i == round(0.6*og):
+        if i == round(0.8*og):
             # marker, ratio to be determined
             if len(centlist)-og <= 2:
                 i = len(centlist)  # stop and shake again to save time
@@ -121,32 +123,32 @@ def random_movement(centlist, tol, vff, rmax, dictionary):
     avail_idx_ls = np.ndarray.tolist(avail_idx)
     print('before ', len(centlist), vff, ' before')
     # print(dictionary)
-
-    for i in range(len(centlist)):
-        if centlist[i][1] > 0.8-centlist[i][2] or centlist[i][1] < 0+centlist[i][2] or centlist[i][0] > 0.8-centlist[i][2] or centlist[i][0] < 0+centlist[i][2]:
-            pass
-        else:
-            # x coord of nn - xcoord of current
-            ref_idx = avail_idx_ls[i]  # find the list of neighbours index
-            neighcount = 0
-            # print(str(dictionary[ref_idx]))
-            while neighcount < 2:
-                if dictionary[ref_idx[neighcount]][1] > 0.8-centlist[i][2] or dictionary[ref_idx[neighcount]][1] < 0+centlist[i][2] or dictionary[ref_idx[neighcount]][0] > 0.8-centlist[i][2] or dictionary[ref_idx[neighcount]][0] < 0+centlist[i][2]:
-                    neighcount += 1
-                else:
+    # shake it thee times before finding space to insert circles
+    for n in range(5):
+        for i in range(len(centlist)):
+            if centlist[i][1] > 0.8-centlist[i][2] or centlist[i][1] < 0+centlist[i][2] or centlist[i][0] > 0.8-centlist[i][2] or centlist[i][0] < 0+centlist[i][2]:
+                pass
+            else:
+                # x coord of nn - xcoord of current
+                ref_idx = avail_idx_ls[i]  # find the list of neighbours index
+                neighcount = 0
+                # print(str(dictionary[ref_idx]))
+                while neighcount <= 5:
+                    # if dictionary[ref_idx[neighcount]][1] > 0.8-centlist[i][2] or dictionary[ref_idx[neighcount]][1] < 0+centlist[i][2] or dictionary[ref_idx[neighcount]][0] > 0.8-centlist[i][2] or dictionary[ref_idx[neighcount]][0] < 0+centlist[i][2]:
+                    #     neighcount += 1
+                    # else:
                     # print(ref_idx)
                     # print(dictionary[ref_idx])
                     avail_x = abs(
                         dictionary[ref_idx[neighcount]][0] - centlist[i][0])
                     avail_y = abs(
                         dictionary[ref_idx[neighcount]][1] - centlist[i][1])
-
                     temp_x = centlist[i][0] + \
                         round(uniform(-avail_x, avail_x), 5)
                     temp_y = centlist[i][1] + \
                         round(uniform(-avail_y, avail_y), 5)
                     tempcircle = [temp_x, temp_y, centlist[i][2]]
-                    if (-rmax < temp_x < 0.8+rmax) and (-rmax < temp_y < 0.8+rmax):
+                    if ((rmax < tempcircle[0] < 0.8-rmax) and (rmax < tempcircle[1] < 0.8-rmax)):
                         # check intercepting; revert back to normal checking
                         comparelist = centlist[:]
                         # comparelist.append(tempcircle)
@@ -157,8 +159,10 @@ def random_movement(centlist, tol, vff, rmax, dictionary):
                             centlist[i] = tempcircle
                             dictionary[i] = tempcircle
                             neighcount = 10
+                        else:
+                            neighcount += 1
+                    else:
                         neighcount += 1
-        print(f"Done: {i}/{len(centlist)}")
     centlist, vff = fillcircle(centlist, vff, dictionary, rmax)
     print(len(centlist), vff)
     # model(width, height, 0.8, vff, centlist)
@@ -333,30 +337,8 @@ def maincheck(X, Y, R, centlist, vff):
     print(vff)  # FVF for each step
     return centlist, vff
 
-
-def specialmovements(circle, radius, tol, vff):
-    """I need to store the locations properly first such that I can search it later"""
-    """FUNCTION NOT IN USED YET BECAUSE OF ^"""
-    # for movement in part 2 3 and 4
-    # if y > 0.8-radius or y < 0 + rad or x > 0.8-radius or x < 0+rad
-
-    if (-radius <= circle[0] <= radius and radius < circle[1] < 0.8-radius) or (circle[0] > 0.8-radius and radius < circle[1] < 0.8-radius):
-        # part 2
-        # if it is part 2 (vertical sides), part 3 horizontal side, part 4 corners
-        pass
-
-    if (radius < circle[0] < 0.8-radius and circle[1] <= radius) or (radius < circle[0] < 0.8-radius and circle[1] >= 0.8-radius):
-        # part 3
-        pass
-
-    if (circle[0] <= radius and circle[1] <= radius) or (circle[0] <= radius and circle[1] >= 0.8-radius) or (circle[0] >= 0.8-radius and circle[1] <= radius) or (circle[0] <= 0.8-radius and circle[1] >= 0.8-radius):
-        # if you shift one corner, you shift adjacent one as well
-        # check all to see if got overlap or not
-        # add inside
-        pass
-
 ################################################################################
-        """START OF COMPUTATION"""
+    """START OF COMPUTATION"""
 
 
 ################################################################################
@@ -369,8 +351,8 @@ rmin = 0.016  # the minmum radius of the fibres
 width = rmax*50  # 0.8   # the length of the RVE
 height = rmax*50  # 0.8 # the width of the RVE
 tol = 0.001  # the minmum distance of two circles (except for the radius)
-target_vf = 0.6  # target FVF to hit
-preset_vf = 0.45    # the FVF in the RVE; to hit initially
+target_vf = 0.65  # target FVF to hit
+# preset_vf = 0.45    # the FVF in the RVE; to hit initially
 centlist = []  # initial empty space
 vff = 0
 # vff = total area of circle / area of box
@@ -389,7 +371,7 @@ print("begin")
 print("vff: ", vff, "\n Vf: ", target_vf)
 counting = 0
 # while vff < preset_vf:
-while counting < 500:
+while counting < 50:
     # change to stright compare x and y
     X = uniform(0 - 1 * rmax, width + 1 * rmax)
     Y = uniform(0 - 1 * rmax, height + 1 * rmax)
@@ -404,10 +386,12 @@ while vff < target_vf:
 # namespaced(centlist, tol, vff, width, height)
 print('check space!')
 print(centlist)
+print(vff)
 model(width, height, 0.8, vff, centlist, dictionary)
 
 # 470 for 0.55
 # 513 for 0.6
+# records the time you take to view the model photo also
 end = time.time()
 print("Time: ", end - start)
 ################################################################################
@@ -429,3 +413,174 @@ B1 = dist[:, 1]
 print(B1, '\n')
 ls = np.ndarray.tolist(B1-0.016)
 print(len(ls), len(centlist))"""
+
+
+"""
+Pseudocode
+# cases if circle is at the outskirts
+
+# zone left side right side
+if left side:
+    second_circle = first_circle [x+width], first_circle [y]
+    
+if right side:
+    second_circle = first_circle [x-width], first_circle [y]
+# zone top bottom
+if top:
+    second_circle = first_circle [x], first_circle [y-height]
+if bottom:
+    second_circle = first_circle [x-width], first_circle [y+height]
+check circle
+
+# zone four corners
+
+
+
+
+"""
+
+#
+###############################################################################
+#  2 - Nearest neighbor orientation                                           #
+###############################################################################
+#
+#
+O = []
+A = centlist
+# Variable parameters
+start_l = 0
+end_l = 2 * pi
+n_step = 10
+interval_step = (end_l - start_l) / n_step
+# print(interval_step)
+#
+M = np.zeros(n_step)
+# for each fibre a, search for the nearest neighbor fibre b
+for i in range(len(A)):
+    a = A[i]  # list a   =====================================================#
+    B = A[:]
+    B.remove(a)
+    array_a = np.array(a)
+    array_B = np.array(B)
+    print("ArrayA: ", array_a)
+    print("ArrayB: ", array_B)
+    array_minP = array_B[spatial.KDTree(array_B).query(array_a)[1]]
+    # list b   ========================================#
+    b = list(array_minP)
+    # print(b)
+    minD = ((list(array_a)[0] - list(array_minP)[0]) ** 2.0 +
+            (list(array_a)[1] - list(array_minP)[1]) ** 2.0) ** 0.5
+    # print(minD)
+    x_dis = abs(a[0] - b[0])  # cosine edge
+    cos_alpha = x_dis / minD
+    # print(cos_alpha)    # the cosine value
+    alpha_o = acos(cos_alpha)  # min_alpha for each quadrant
+    #
+    # alpha for different quadrant using the alpha_o
+    if b[0] > a[0] and b[1] < a[1]:
+        alpha = alpha_o
+    if b[0] < a[0] and b[1] < a[1]:
+        alpha = pi - alpha_o
+    if b[0] < a[0] and b[1] > a[1]:
+        alpha = pi + alpha_o
+    if b[0] > a[0] and b[1] > a[1]:
+        alpha = 2 * pi - alpha_o
+    # print(i, alpha)   # the angle of the two fibres
+#=============================================================================#
+    i = 0
+    for k in np.arange(start_l, end_l, interval_step):
+        if alpha >= k and alpha < k + interval_step:
+            M[i] += 1
+        i += 1
+# print(M, '\n')   # counts of alpha in each interval of angles
+#
+O_bank = [0]
+for i in range(len(M)):
+    x = sum(M[: i + 1])
+    # print(x)
+    prob_o = x / len(A)
+    O_bank.append(prob_o)
+# cumulative probability of alpha with increasing of intervals
+print('2: cumulative probability of alpha:\n', O_bank, '\n')
+O.append(O_bank)
+print(O)
+#============================================================================#
+#
+
+
+def curv_plt(x_axis, y_array, l_color, l_label):
+    l_mean = np.mean(y_array, axis=0)
+    l_max = np.max(y_array, axis=0)
+    l_min = np.min(y_array, axis=0)
+    plt.plot(x_axis, l_mean, color=l_color, label=l_label, marker='.')
+    plt.fill_between(x_axis, l_min, l_max, color=l_color, alpha=0.2)
+    plt.legend(fontsize=16)
+
+
+#
+# plot the nearest neighbor orientation
+plt.figure()
+curv_plt(np.arange(0, n_step + 1, 1), O, 'r', 'Nearest neighbor orientation')
+plt.xlabel('Orientation [degree]')
+plt.ylabel('Cumulative Distribution Function')
+plt.xlim(0, 10)
+plt.ylim(0, 1.0)
+plt.legend(loc='upper left')
+plt.show()
+#
+###############################################################################
+#  End of function                                                            #
+###############################################################################
+
+
+#
+###############################################################################
+#  3 - Ripley's K function                                                    #
+###############################################################################
+#
+#
+R = []
+x = np.array(centlist)   # array of list of CentList
+z = x[:, [0, 1]]         # extract the first two columns
+# print(z, '\n')
+#
+Kest = RipleysKEstimator(area=0.8**2, x_max=0.8 + rmax,
+                         y_max=0.8 + rmax, x_min=-rmax, y_min=- rmax)
+# start from 0, end with 0.24, 100 floats, but how to determine the r value? 0.3 * x_max
+h = np.linspace(0, 0.3, 30)
+y_r = Kest(data=z, radii=h, mode='ripley')
+R.append(y_r)
+#=============================================================================#
+#
+
+
+def curv_plt(x_axis, y_array, l_color, l_label):
+    l_mean = np.mean(y_array, axis=0)
+    l_max = np.max(y_array, axis=0)
+    l_min = np.min(y_array, axis=0)
+    plt.plot(x_axis, l_mean, color=l_color, label=l_label, marker='.')
+    plt.fill_between(x_axis, l_min, l_max, color=l_color, alpha=0.2)
+    plt.legend(fontsize=16)
+
+
+#
+# plot the Poisson and Ripley's K function
+plt.figure()
+plt.plot(h/rmax, Kest.poisson(h), color='green',
+         ls=':', label=r'$K_{pois}$')  # poisson curve
+# print('3-1: y coordinate values on poisson curve:\n', Kest.poisson(h), '\n')
+curv_plt(h/rmax, np.array(R), 'r', '$K_{ripley}$')  # ripley curve
+# print('3-2: y coordinate values on Ripley curve:\n', Kest(data=z, radii=h, mode='ripley'), '\n')  # y coordinate value
+plt.xlabel('h/R')
+plt.ylabel('K(h)')
+plt.legend()
+plt.show()
+#
+###############################################################################
+#  End of function                                                            #
+###############################################################################
+
+
+# for randomness analysis
+R_mean = np.average(R, axis=0)   # average value of D1 for 20 calculations
+print(list(R_mean))
